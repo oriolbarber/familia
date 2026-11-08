@@ -6,3 +6,4 @@ PWA privada per a la família: agenda (Google Calendar), autoritzacions, tasques
 - Especificació: [docs/proposta-v2.md](docs/proposta-v2.md)
 - Full de ruta: [docs/full-de-ruta.md](docs/full-de-ruta.md)
 - Prompts de cada xat: [docs/xats/](docs/xats/)
+- Enllaços: [docs/enllacos.md](docs/enllacos.md)

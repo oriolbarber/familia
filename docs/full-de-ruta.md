@@ -10,7 +10,8 @@ Cada etapa és **un xat** (prompt a `docs/xats/`). No es comença la següent fi
 - [ ] Import a partir del qual una activitat amb cost demana autorització
 - [ ] Llista inicial de tasques recurrents i interval màxim de cadascuna
 - [ ] Hora del resum del matí; també caps de setmana?
-- [ ] Repositori a GitHub creat i projecte Supabase creat (pla gratuït)
+- [x] Repositori a GitHub creat (`oriolbarber/familia`)
+- [ ] Projecte Supabase creat (pla gratuït)
 
 ## 1 · Prova de concepte — `xats/01-prova-de-concepte.md`
 

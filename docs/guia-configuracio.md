@@ -7,7 +7,7 @@ Al final tindràs:
 - la **URL de les funcions** de Supabase,
 - la **clau pública VAPID**,
 
-i la PWA publicada a `https://<usuari>.github.io/gestio-familiar/`.
+i la PWA publicada a `https://oriolbarber.github.io/familia/`.
 
 ---
 
@@ -38,7 +38,7 @@ i la PWA publicada a `https://<usuari>.github.io/gestio-familiar/`.
 
 ## 4 · Claus VAPID (per als avisos)
 
-1. Obre `app/eines/vapid.html` al navegador (doble clic al fitxer, o un cop publicada: `…/gestio-familiar/eines/vapid.html`).
+1. Obre `app/eines/vapid.html` al navegador (doble clic al fitxer, o un cop publicada: `https://oriolbarber.github.io/familia/eines/vapid.html`).
 2. Toca **Genera**. Copia les dues caixes:
    - la primera (JSON llarg) → secret `VAPID_KEYS` a Supabase,
    - la segona (text curt) → `VAPID_PUBLICA` a `app/config.js`.
@@ -80,9 +80,9 @@ Ha de tornar `{"esdeveniments":[…]}`.
    - `FUNCIONS_URL`: `https://xxxx.supabase.co/functions/v1`
    - `VAPID_PUBLICA`: la clau curta del pas 4
    - `MEMBRES`: noms reals, colors i inicials
-2. Puja el repositori a GitHub (`gestio-familiar`, pot ser privat si tens GitHub Pro; si no, públic: no conté cap secret).
+2. Fes commit i push a `oriolbarber/familia` (ja està creat). Pages en un repositori privat requereix GitHub Pro; si no en tens, fes-lo públic: no conté cap secret.
 3. Al repositori: **Settings → Pages → Source: GitHub Actions**. El flux `.github/workflows/pages.yml` publica la carpeta `app/` a cada canvi.
-4. URL final: `https://<usuari>.github.io/gestio-familiar/`.
+4. URL final: `https://oriolbarber.github.io/familia/`.
 
 ## 8 · Prova als quatre mòbils
 

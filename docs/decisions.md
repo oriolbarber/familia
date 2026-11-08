@@ -26,6 +26,10 @@ Format: data · decisió · motiu · estat (vigent / pendent de confirmar / subs
 | 2026-11-08 | **Mode prova**: sense Supabase configurat, l'app funciona amb dades d'exemple | Es pot provar i ensenyar a la família abans de configurar res | Vigent |
 | 2026-11-08 | Tasques, compra, desitjos, préstecs i historial de permisos es desen **de moment en cada mòbil**; es compartiran amb Supabase (xat 02) | Primer muntatge usable sense esperar el backend | Provisional |
 | 2026-11-08 | Lletra Atkinson Hyperlegible inclosa a l'app (sense dependències externes) | Llegibilitat i funcionament sense connexió | Vigent |
+| 2026-11-08 | Tasques: filtres com a l'Agenda (per defecte «Les meves» = meves + lliures; també Tothom, Lliures i per persona) | Comentari de l'Oriol | Vigent |
+| 2026-11-08 | Tasques: es poden proposar a una altra persona; una tasca nova proposada **no és activa fins que s'accepta**. Si la rebutja, qui la va proposar la pot deixar lliure o proposar-la a algú altre | Comentari de l'Oriol; principi «facilitar acords» | Vigent |
+| 2026-11-08 | Préstecs: les dues persones han d'estar d'acord per crear-lo i per donar-lo per retornat. Els adults els veuen però no poden confirmar per altres | Comentari de l'Oriol | Vigent |
+| 2026-11-08 | Punts vermells amb número a la barra inferior i a les seccions quan tens alguna cosa per respondre | Comentari de l'Oriol; el número fa que no depengui només del color | Vigent |
 
 ## Per què el compte de servei (xat 01)
 

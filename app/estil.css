@@ -24,6 +24,7 @@
   --avis-text: #6A4200;
   --avis-vora: #C98A1A;
   --perill: #B42318;
+  --vermell: #D92D20;
   --ombra: 0 6px 16px rgb(20 40 90 / .22);
   color-scheme: light;
 }
@@ -97,6 +98,15 @@ h1, h2, h3, p { margin: 0; }
 }
 .nav a[aria-current="page"] { color: var(--primari); font-weight: 700; }
 .nav svg { width: 26px; height: 26px; }
+
+/* ---------- Punts vermells d'avís (amb número: no depenen només del color) ---------- */
+.amb-punt { position: relative; display: inline-flex; align-items: center; }
+.punt-avis {
+  position: absolute; top: -6px; right: -10px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px;
+  background: var(--vermell); color: #fff; font-size: .7rem; font-weight: 700; line-height: 20px; text-align: center;
+  box-shadow: 0 0 0 2px var(--sup);
+}
+h2 .punt-avis { top: -4px; right: -8px; }
 
 /* ---------- Botons ---------- */
 .boto {

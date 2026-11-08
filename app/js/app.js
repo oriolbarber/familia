@@ -155,6 +155,15 @@ async function render() {
   pinta(p);
 }
 
+// Avisos pendents per a la persona actual (punts vermells)
+function comptadors() {
+  const permisos = esAdult() ? [...vistos.values()].filter((e) => e.permis?.estat === "pendent" && new Date(fiReal(e)) > new Date()).length : 0;
+  const tasques = propostesMeves().perMi.length;
+  const prestecs = prestecsInfo().filter((p) => p.tocaAMi).length;
+  return { inici: 0, agenda: permisos, tasques, compra: 0, mes: prestecs };
+}
+const punt = (n, etiqueta = "avisos") => (n ? h`<span class="punt-avis" aria-label="${plural(n, "avís", etiqueta)}">${n > 9 ? "9+" : n}</span>` : "");
+
 function pinta(p) {
   const barra = $("#barra"), vista = $("#vista"), nav = $("#nav");
   barra.hidden = !!p.senseBarra;
@@ -165,7 +174,8 @@ function pinta(p) {
   vista.className = "vista" + (p.sub ? " sub entra" : "");
   vista.innerHTML = val(p.cos);
   nav.hidden = !!(p.sub || p.senseNav);
-  nav.innerHTML = val(TABS.map(([r, t, ic]) => h`<a href="#${r}" ${r === p.tab ? raw('aria-current="page"') : ""}>${ic}${t}</a>`));
+  const n = comptadors();
+  nav.innerHTML = val(TABS.map(([r, t, ic]) => h`<a href="#${r}" ${r === p.tab ? raw('aria-current="page"') : ""}><span class="amb-punt">${ic}${punt(n[r])}</span>${t}</a>`));
   $("#franja").hidden = !MODE_PROVA;
   $("#franja").textContent = "Mode prova · dades d'exemple en aquest mòbil";
   document.title = p.titol ? `${typeof p.titol === "string" ? p.titol : "Família"} · Família` : "Família";
@@ -199,11 +209,16 @@ async function pantInici() {
   } else {
     for (const e of pendents.filter((x) => x.persona === jo)) toca.push(h`<button class="element" data-accio="detall" data-id="${e.id}">${I.rellotge}<span class="cos"><b>Esperant permís</b><span>${e.titol}</span></span>${I.seg}</button>`);
   }
-  for (const t of tasquesInfo().filter((t) => t.endarrerida).slice(0, 3)) {
+  const ts = tasquesInfo();
+  for (const t of propostesMeves(ts).perMi) {
+    toca.push(h`<a class="element avis" href="#tasques">${inicial(t.proposta.per, "petita")}<span class="cos"><b>Et proposen: ${t.nom}</b><span>${nom(t.proposta.per)} · accepta-la o digues que no</span></span>${I.seg}</a>`);
+  }
+  for (const t of ts.filter((t) => t.endarrerida && tascaAplica(t, "meu")).slice(0, 3)) {
     toca.push(h`<a class="element" href="#tasca/${t.id}">${raw(I.alerta.s.replace('stroke="currentColor"', 'stroke="#9A5B00"'))}<span class="cos"><b>${t.nom}</b><span>Endarrerida · ${t.text}</span></span>${I.seg}</a>`);
   }
-  for (const p of Col.llista("prestecs").filter((p) => p.estat === "pendent" && p.a === jo)) {
-    toca.push(h`<a class="element" href="#mes">${I.canvi}<span class="cos"><b>Préstec pendent</b><span>Has de tornar ${euros(p.import)} a ${nom(p.de)}</span></span>${I.seg}</a>`);
+  for (const p of prestecsInfo()) {
+    if (p.tocaAMi) toca.push(h`<a class="element avis" href="#mes">${I.canvi}<span class="cos"><b>Préstec per confirmar</b><span>${p.text}</span></span>${I.seg}</a>`);
+    else if (p.estat === "actiu" && p.a === jo) toca.push(h`<a class="element" href="#mes">${I.canvi}<span class="cos"><b>Préstec pendent</b><span>Has de tornar ${euros(p.import)} a ${nom(p.de)}</span></span>${I.seg}</a>`);
   }
 
   const cap = h`
@@ -525,74 +540,156 @@ async function pantPermis(id) {
 
 // =============================================================
 // 9 · Tasques
+// Una tasca pot ser LLIURE (qualsevol l'agafa) o ASSIGNADA a una persona.
+// Assignar-la a algú altre és una PROPOSTA: no queda activa fins que l'accepta.
+//   t.assignada = { persona, estat: "proposta" | "acceptada" | "rebutjada", per, quan }
+//   t.activa = false mentre una tasca nova espera resposta (les tasques antigues sempre són actives)
 // =============================================================
+let filtreTasques = pref("tasques-filtre", "meu");
+
 function tasquesInfo() {
   const hui = avui();
   return Col.llista("tasques").map((t) => {
     const fetes = t.fetes ?? [];
     const ultima = fetes.reduce((m, f) => (!m || f.quan > m.quan ? f : m), null);
     const agafada = t.agafada?.dia === isoDia(hui) ? t.agafada.persona : null;
+    const activa = t.activa !== false;
+    const responsable = t.assignada?.estat === "acceptada" ? t.assignada.persona : null;
+    const proposta = t.assignada?.estat === "proposta" ? t.assignada : null;
+    const rebutjada = t.assignada?.estat === "rebutjada" ? t.assignada : null;
+    const base = { ...t, ultima, agafada, activa, responsable, proposta, rebutjada };
     if (t.tipus === "puntual") {
       const falten = Math.round((dataDe(t.limit) - hui) / DIA);
       const feta = fetes.length > 0;
-      return { ...t, ultima, agafada, feta, endarrerida: !feta && falten < 0, ratio: feta ? -1 : 1 - falten / 30,
+      return { ...base, feta, endarrerida: activa && !feta && falten < 0, ratio: feta ? -1 : 1 - falten / 30,
         text: feta ? `feta ${faDies(ultima.quan)}` : falten < 0 ? `havia de ser el ${fDiaCurt.format(dataDe(t.limit))}` : falten === 0 ? "és per avui" : `abans del ${fDiaCurt.format(dataDe(t.limit))}` };
     }
     const des = ultima?.quan ?? t.creada;
     const dies = Math.max(0, Math.round((hui - mitjanit(new Date(des))) / DIA));
-    return { ...t, ultima, agafada, feta: false, dies, endarrerida: dies > t.cada, ratio: dies / t.cada,
+    return { ...base, feta: false, dies, endarrerida: activa && dies > t.cada, ratio: dies / t.cada,
       text: `${ultima ? (dies === 0 ? "feta avui" : `fa ${dies} ${dies === 1 ? "dia" : "dies"}`) : "encara no s'ha fet"} (cada ${t.cada})` };
   }).sort((a, b) => b.ratio - a.ratio);
 }
 
+// Quines tasques actives entren a cada filtre
+function tascaAplica(t, f = filtreTasques) {
+  if (!t.activa) return false;
+  if (f === "tothom") return true;
+  if (f === "lliures") return !t.responsable;
+  if (f === "meu") return t.responsable === jo || !t.responsable;
+  return t.responsable === f || t.agafada === f;
+}
+
+// Propostes que afecten la persona actual (sempre visibles, sense filtre)
+function propostesMeves(ts = tasquesInfo()) {
+  return {
+    perMi: ts.filter((t) => t.proposta?.persona === jo),
+    meves: ts.filter((t) => (t.proposta || t.rebutjada) && (t.proposta ?? t.rebutjada).per === jo),
+  };
+}
+
+function quiFa(t) {
+  if (t.responsable) return h`<span class="fila" style="font-size:.85rem;color:var(--suau);gap:6px">${inicial(t.responsable, "petita")}${t.responsable === jo ? "És teva" : `És de ${nom(t.responsable)}`}</span>`;
+  if (t.agafada) return h`<span class="fila" style="font-size:.85rem;color:var(--suau);gap:6px">${inicial(t.agafada, "petita")}${t.agafada === jo ? "L'has agafat avui" : `L'agafa ${nom(t.agafada)} avui`}</span>`;
+  return h`<span style="font-size:.85rem;color:var(--suau)">Lliure</span>`;
+}
+
 function botonsTasca(t) {
   const meva = t.agafada === jo;
-  return h`<div class="graella2">
-    ${t.agafada && !meva ? h`<span class="fila" style="justify-content:center;color:var(--suau)">${inicial(t.agafada, "petita")}l'agafa avui</span>` : h`<button class="boto" data-accio="tasca-agafa" data-id="${t.id}">${meva ? "La deixo" : "Me la quedo"}</button>`}
-    <button class="boto primari" data-accio="tasca-feta" data-id="${t.id}">Feta</button>
-  </div>`;
+  const esquerra = t.responsable
+    ? h`<span class="fila" style="justify-content:center;color:var(--suau)">${inicial(t.responsable, "petita")}${t.responsable === jo ? "És teva" : nom(t.responsable)}</span>`
+    : t.agafada && !meva
+      ? h`<span class="fila" style="justify-content:center;color:var(--suau)">${inicial(t.agafada, "petita")}l'agafa avui</span>`
+      : h`<button class="boto" data-accio="tasca-agafa" data-id="${t.id}">${meva ? "La deixo" : "Me la quedo"}</button>`;
+  return h`<div class="graella2">${esquerra}<button class="boto primari" data-accio="tasca-feta" data-id="${t.id}">Feta</button></div>`;
+}
+
+function tarjaProposta(t) {
+  if (t.proposta?.persona === jo) {
+    return h`<section class="targeta" style="border:2px solid var(--avis-vora)">
+      <span class="fila">${inicial(t.proposta.per, "petita")}<span style="color:var(--suau)">${nom(t.proposta.per)} et proposa</span></span>
+      <a href="#tasca/${t.id}" style="color:inherit;text-decoration:none"><b style="font-size:1.1rem">${t.nom}</b></a>
+      <span style="color:var(--suau);font-size:.9rem">${t.tipus === "recurrent" ? `Cada ${t.cada} dies` : `Abans del ${fDiaCurt.format(dataDe(t.limit))}`}${t.proposta.nota ? ` · «${t.proposta.nota}»` : ""}</span>
+      <div class="graella2"><button class="boto" data-accio="tasca-rebutja" data-id="${t.id}">No pot ser</button><button class="boto primari" data-accio="tasca-accepta" data-id="${t.id}">${I.ok}Accepto</button></div>
+    </section>`;
+  }
+  if (t.proposta) {
+    return h`<a class="element" href="#tasca/${t.id}">${I.rellotge}<span class="cos"><b>${t.nom}</b><span>Esperant resposta de ${nom(t.proposta.persona)}</span></span>${inicial(t.proposta.persona, "petita")}</a>`;
+  }
+  return h`<section class="targeta">
+    <span class="fila">${inicial(t.rebutjada.persona, "petita")}<span><b>${nom(t.rebutjada.persona)}</b> no pot fer «${t.nom}»</span></span>
+    <div class="graella2"><a class="boto" href="#tasca/${t.id}">Proposa-la a una altra persona</a><button class="boto" data-accio="tasca-allibera" data-id="${t.id}">Deixa-la lliure</button></div>
+  </section>`;
 }
 
 function pantTasques() {
   const ts = tasquesInfo();
-  const endarr = ts.filter((t) => t.endarrerida);
-  const alDia = ts.filter((t) => !t.endarrerida && !t.feta);
-  const fetes = ts.filter((t) => t.feta);
+  const { perMi, meves } = propostesMeves(ts);
+  const visibles = ts.filter((t) => tascaAplica(t));
+  const endarr = visibles.filter((t) => t.endarrerida);
+  const alDia = visibles.filter((t) => !t.endarrerida && !t.feta);
+  const fetes = visibles.filter((t) => t.feta);
+  const filtres = h`<div class="xips" role="group" aria-label="Filtre" style="margin-bottom:12px">
+    ${[["meu", "Les meves"], ["tothom", "Tothom"], ["lliures", "Lliures"]].map(([f, t]) => h`<button class="xip" data-accio="tasques-filtre" data-f="${f}" aria-pressed="${filtreTasques === f}">${t}</button>`)}
+    ${C.MEMBRES.filter((m) => m.id !== jo).map((m) => h`<button class="xip amb-inicial" data-accio="tasques-filtre" data-f="${m.id}" aria-pressed="${filtreTasques === m.id}" aria-label="${m.nom}">${inicial(m.id, "petita")}</button>`)}
+  </div>`;
+  const textBuit = { meu: "No tens cap tasca pendent.", tothom: "No hi ha tasques.", lliures: "No hi ha tasques lliures." }[filtreTasques] ?? `${nom(filtreTasques)} no té cap tasca.`;
   return {
     tab: "tasques", titol: "Tasques",
     dreta: h`<a class="icona-boto ple" href="#tasca-nova" aria-label="Nova tasca">${I.mes1}</a>`,
     cos: h`
+      ${perMi.length || meves.length ? h`<div class="seccio" style="margin:0 0 16px"><h2><span class="amb-punt" style="padding-right:14px">Propostes${punt(perMi.length)}</span></h2>${perMi.map(tarjaProposta)}${meves.map(tarjaProposta)}</div>` : ""}
+      ${filtres}
       ${endarr.map((t) => h`<section class="targeta" style="margin-bottom:12px">
-        <a class="fila" href="#tasca/${t.id}" style="color:inherit;text-decoration:none">${raw(I.alerta.s.replace('stroke="currentColor"', 'stroke="#9A5B00"'))}<b style="flex:1;font-size:1.1rem">${t.nom}</b>${t.agafada ? inicial(t.agafada, "petita") : ""}</a>
+        <a class="fila" href="#tasca/${t.id}" style="color:inherit;text-decoration:none">${raw(I.alerta.s.replace('stroke="currentColor"', 'stroke="#9A5B00"'))}<b style="flex:1;font-size:1.1rem">${t.nom}</b></a>
         <div class="barra-progres endarrerida"><div style="width:100%"></div></div>
         <span class="text-avis">Endarrerida · ${t.text}</span>
         ${botonsTasca(t)}
       </section>`)}
-      ${alDia.length ? h`<span class="etiqueta-seccio" style="display:block">Al dia</span>` : ""}
+      ${alDia.length && endarr.length ? h`<span class="etiqueta-seccio" style="display:block">Al dia</span>` : ""}
       <div class="seccio" style="margin-top:8px">${alDia.map((t) => h`<a class="element" href="#tasca/${t.id}" style="flex-direction:column;align-items:stretch;gap:6px">
         <span class="fila" style="justify-content:space-between"><b>${t.nom}</b><span style="color:var(--suau);font-size:.9rem">${t.tipus === "recurrent" ? (t.ultima ? faDies(t.ultima.quan) : "nova") : t.text}</span></span>
         ${t.tipus === "recurrent" ? h`<div class="barra-progres"><div style="width:${Math.min(100, Math.round(t.ratio * 100))}%"></div></div>` : ""}
-        ${t.agafada ? h`<span class="fila" style="font-size:.85rem;color:var(--suau)">${inicial(t.agafada, "petita")}l'agafa avui</span>` : ""}
+        ${quiFa(t)}
       </a>`)}</div>
-      ${!ts.length ? h`<p class="buit">Encara no hi ha tasques. Afegeix-ne amb el botó +.</p>` : ""}
+      ${!endarr.length && !alDia.length ? h`<p class="buit">${textBuit}</p>` : ""}
       ${fetes.length ? h`<details style="margin-top:12px"><summary>Puntuals fetes · ${fetes.length}</summary>
         <div class="seccio" style="margin-top:4px">${fetes.map((t) => h`<a class="element" href="#tasca/${t.id}"><span class="cos"><b>${t.nom}</b><span>${t.text} · ${nom(t.ultima.persona)}</span></span></a>`)}</div></details>` : ""}
       ${avisLocal()}`,
   };
 }
 
+// Selector de persona per proposar una tasca («Lliure» opcional)
+function triaResponsable(seleccio, ambLliure) {
+  return h`<div class="fila" role="group" aria-label="Per a qui" style="flex-wrap:wrap">
+    ${ambLliure ? h`<button type="button" class="opcio" data-accio="tasca-per" data-id="" aria-pressed="${!seleccio}" style="min-width:96px">Lliure</button>` : ""}
+    ${C.MEMBRES.map((m) => h`<button type="button" class="tria-persona" data-accio="tasca-per" data-id="${m.id}" aria-pressed="${m.id === seleccio}" aria-label="${m.nom}" style="background:${m.color}">${m.inicial}</button>`)}
+  </div>`;
+}
+const responsableTriat = () => $("[data-accio=tasca-per][aria-pressed=true]")?.dataset.id || null;
+
 function pantTasca(id) {
   const t = tasquesInfo().find((x) => x.id === id);
   if (!t) return { sub: true, pare: "tasques", titol: "Tasca", cos: h`<p class="buit">Aquesta tasca ja no existeix.</p>` };
   const fetes = [...(t.fetes ?? [])].reverse();
+  let quiCos;
+  if (t.proposta?.persona === jo) quiCos = tarjaProposta(t);
+  else if (t.proposta) quiCos = h`<p>${nom(t.proposta.per)} l'ha proposat a <b>${nom(t.proposta.persona)}</b>. Esperant resposta.</p>
+    ${t.proposta.per === jo || esAdult() ? h`<button class="boto ample" data-accio="tasca-retira" data-id="${t.id}">Retira la proposta</button>` : ""}`;
+  else if (t.responsable === jo) quiCos = h`<p>És teva.</p><button class="boto ample" data-accio="tasca-allibera" data-id="${t.id}">Deixa-la lliure</button>`;
+  else quiCos = h`<p>${t.responsable ? h`És de <b>${nom(t.responsable)}</b>.` : t.rebutjada ? h`${nom(t.rebutjada.persona)} no la pot fer.` : "És lliure: qualsevol la pot agafar."}</p>
+    <div class="camp"><span class="etiq">Proposa-la a</span>${triaResponsable(null, false)}</div>
+    <div class="camp"><label for="t-nota">Missatge <span class="ajuda">(opcional)</span></label><input id="t-nota" type="text" maxlength="120"></div>
+    <button class="boto ample" data-accio="tasca-proposa" data-id="${t.id}">Proposa</button>`;
   return {
     sub: true, pare: "tasques", titol: t.nom,
     cos: h`<div class="formulari">
-      <section class="targeta">
+      ${t.activa ? h`<section class="targeta">
         ${t.tipus === "recurrent" ? h`<div class="barra-progres ${t.endarrerida ? "endarrerida" : ""}"><div style="width:${Math.min(100, Math.round(t.ratio * 100))}%"></div></div>` : ""}
         <span class="${t.endarrerida ? "text-avis" : ""}">${t.endarrerida ? "Endarrerida · " : ""}${t.text}</span>
         ${t.feta ? "" : botonsTasca(t)}
-      </section>
+      </section>` : h`<p class="avis-caixa">${I.rellotge}<span>Encara no és activa: s'activarà quan l'acceptin.</span></p>`}
+      <div class="seccio" style="margin-top:0"><h2>Qui la fa</h2>${quiCos}</div>
       <form id="form-tasca" class="formulari" style="padding-top:0">
         <div class="camp"><label for="t-nom">Nom</label><input id="t-nom" type="text" required maxlength="80" value="${t.nom}"></div>
         ${t.tipus === "recurrent"
@@ -632,21 +729,35 @@ function pantTascaNova() {
       </div>
       <div class="camp" id="tn-cada-camp" ${tipusNova === "puntual" ? raw("hidden") : ""}><label for="tn-cada">Cada quants dies, com a màxim</label><input id="tn-cada" type="number" min="1" max="365" value="7"></div>
       <div class="camp" id="tn-limit-camp" ${tipusNova === "recurrent" ? raw("hidden") : ""}><label for="tn-limit">Data límit</label><input id="tn-limit" type="date" value="${isoDia(sumaDies(avui(), 7))}"></div>
-      <button class="boto primari ample" type="submit">Desa</button>
+      <div class="camp"><span class="etiq">Per a qui</span>${triaResponsable(null, true)}</div>
+      <div class="camp" id="tn-nota-camp" hidden><label for="tn-nota">Missatge <span class="ajuda">(opcional)</span></label><input id="tn-nota" type="text" maxlength="120" placeholder="Per exemple: aquesta setmana no arribo"></div>
+      <p id="tn-info" class="avis-caixa" hidden></p>
+      <button id="tn-desa" class="boto primari ample" type="submit">Desa</button>
     </form>`,
     despres: () => {
       $("#form-tn").onsubmit = (ev) => {
         ev.preventDefault();
+        const per = responsableTriat();
         const base = { nom: $("#tn-nom").value.trim(), tipus: tipusNova, creada: new Date().toISOString(), fetes: [] };
         if (tipusNova === "recurrent") base.cada = Math.max(1, Number($("#tn-cada").value || 7));
         else base.limit = $("#tn-limit").value;
+        if (per === jo) base.assignada = { persona: jo, estat: "acceptada", per: jo, quan: base.creada };
+        else if (per) { base.assignada = { persona: per, estat: "proposta", per: jo, quan: base.creada, nota: $("#tn-nota").value.trim() }; base.activa = false; }
         Col.afegeix("tasques", base);
-        avisa("Tasca afegida.");
+        avisa(per && per !== jo ? `Proposada a ${nom(per)}. S'activarà quan l'accepti.` : "Tasca afegida.");
         location.hash = "tasques";
       };
       $("#tn-nom").focus();
     },
   };
+}
+function actualitzaTascaNova() {
+  const per = responsableTriat();
+  const altre = per && per !== jo;
+  $("#tn-nota-camp").hidden = !altre;
+  $("#tn-info").hidden = !altre;
+  $("#tn-info").textContent = altre ? `${nom(per)} la rebrà com a proposta. Quan l'accepti, quedarà activa.` : "";
+  $("#tn-desa").textContent = altre ? "Proposa" : "Desa";
 }
 
 // =============================================================
@@ -694,16 +805,9 @@ function pantMes() {
   deQui = deQui ?? jo;
   const desitjos = Col.llista("desitjos").filter((d) => d.persona === deQui)
     .sort((a, b) => Object.keys(PRIORITATS).indexOf(a.prioritat) - Object.keys(PRIORITATS).indexOf(b.prioritat));
-  const prestecs = Col.llista("prestecs").filter((p) => esAdult() || p.de === jo || p.a === jo);
-  const pend = prestecs.filter((p) => p.estat === "pendent");
-  const retornats = prestecs.filter((p) => p.estat !== "pendent");
-  const tarjaPrestec = (p) => h`<section class="targeta">
-    <div class="fila">${inicial(p.de, "petita")}${I.seg}${inicial(p.a, "petita")}<span class="import-gran">${euros(p.import)}</span></div>
-    <span style="color:var(--suau);font-size:.9rem">${nom(p.de)} ho deixa a ${nom(p.a)} · ${fDiaCurt.format(dataDe(p.data))}${p.nota ? ` · ${p.nota}` : ""}</span>
-    ${p.estat === "pendent" ? h`<div class="fila" style="justify-content:space-between"><span class="estat-pendent">${I.rellotge}Pendent</span>
-      ${p.de === jo || esAdult() ? h`<button class="boto primari petit" data-accio="prestec-retornat" data-id="${p.id}">Retornat</button>` : ""}</div>`
-      : h`<div class="fila" style="justify-content:space-between"><span style="color:var(--suau)">Retornat</span><button class="boto petit perill" data-accio="prestec-esborra" data-id="${p.id}">Esborra</button></div>`}
-  </section>`;
+  const prestecs = prestecsInfo().filter((p) => p.visible);
+  const oberts = prestecs.filter((p) => p.estat !== "retornat").sort((x, y) => y.tocaAMi - x.tocaAMi);
+  const retornats = prestecs.filter((p) => p.estat === "retornat");
   return {
     tab: "mes", titol: "Més",
     cos: h`<div class="seccio" style="margin-top:4px">
@@ -714,10 +818,10 @@ function pantMes() {
             <span class="prioritat ${d.prioritat}">${PRIORITATS[d.prioritat] ?? ""}</span></button>`)
           : h`<p class="buit">${deQui === jo ? "Encara no hi has afegit res." : "Encara no hi ha res."}</p>`}
       </div>
-      <div class="seccio"><h2>Préstecs <a class="boto petit" href="#prestec-nou">Nou</a></h2>
-        ${pend.length ? pend.map(tarjaPrestec) : h`<p class="buit">Cap préstec pendent.</p>`}
+      <div class="seccio"><h2><span class="amb-punt" style="padding-right:14px">Préstecs${punt(prestecs.filter((p) => p.tocaAMi).length)}</span> <a class="boto petit" href="#prestec-nou">Nou</a></h2>
+        ${oberts.length ? oberts.map(tarjaPrestec) : h`<p class="buit">Cap préstec pendent.</p>`}
         ${retornats.length ? h`<details><summary>Retornats · ${retornats.length}</summary><div class="seccio" style="margin-top:4px">${retornats.map(tarjaPrestec)}</div></details>` : ""}
-        <p class="buit" style="font-size:.85rem">Els préstecs només els veuen les dues persones implicades i els adults.</p>
+        <p class="buit" style="font-size:.85rem">Un préstec només compta quan les dues persones hi estan d'acord, i també per donar-lo per retornat. El veuen les dues persones i els adults.</p>
       </div>
       ${avisLocal()}`,
   };
@@ -764,27 +868,80 @@ function pantDesigNou() {
   };
 }
 
+// =============================================================
+// Préstecs: les dues persones han d'estar d'acord
+//   estat: "proposat" (l'ha creat `per`, falta l'altra) → "actiu"
+//          "actiu" → "retorn" (l'ha proposat `retornPer`, falta l'altra) → "retornat"
+//          "rebutjat": l'altra persona ha dit que no és així
+// =============================================================
+const altreDe = (p, qui) => (qui === p.de ? p.a : p.de);
+
+function prestecsInfo() {
+  return Col.llista("prestecs").map((x) => {
+    const p = { ...x, estat: x.estat === "pendent" ? "actiu" : x.estat }; // dades antigues
+    const implicat = p.de === jo || p.a === jo;
+    const espera = p.estat === "proposat" ? altreDe(p, p.per) : p.estat === "retorn" ? altreDe(p, p.retornPer) : null;
+    let text = "";
+    if (p.estat === "proposat") {
+      text = espera === jo
+        ? `${nom(p.per)} diu que ${p.de === jo ? "li has deixat" : "t'ha deixat"} ${euros(p.import)}`
+        : `Esperant que ${nom(espera)} ho confirmi`;
+    } else if (p.estat === "retorn") {
+      text = espera === jo ? `${nom(p.retornPer)} diu que ja està retornat` : `Esperant que ${nom(espera)} confirmi el retorn`;
+    } else if (p.estat === "rebutjat") text = `${nom(altreDe(p, p.per))} diu que no és així`;
+    else if (p.estat === "actiu") text = "Pendent de retornar";
+    else text = `Retornat${p.retornat ? " el " + fDiaCurt.format(new Date(p.retornat)) : ""}`;
+    return { ...p, implicat, espera, tocaAMi: espera === jo, text,
+      visible: implicat || (esAdult() && p.estat !== "rebutjat") };
+  });
+}
+
+function tarjaPrestec(p) {
+  let accions = "";
+  if (p.tocaAMi && p.estat === "proposat") {
+    accions = h`<div class="graella2"><button class="boto" data-accio="prestec-no" data-id="${p.id}">No és així</button><button class="boto primari" data-accio="prestec-si" data-id="${p.id}">${I.ok}És correcte</button></div>`;
+  } else if (p.tocaAMi && p.estat === "retorn") {
+    accions = h`<div class="graella2"><button class="boto" data-accio="prestec-encara" data-id="${p.id}">Encara no</button><button class="boto primari" data-accio="prestec-retornat-si" data-id="${p.id}">${I.ok}Sí, retornat</button></div>`;
+  } else if (p.estat === "actiu" && p.implicat) {
+    accions = h`<button class="boto ample" data-accio="prestec-retorn" data-id="${p.id}">Ja està retornat</button>`;
+  } else if ((p.estat === "proposat" && p.per === jo) || p.estat === "rebutjat" || (p.estat === "retornat" && p.implicat)) {
+    accions = h`<button class="boto perill ample" data-accio="prestec-esborra" data-id="${p.id}">${p.estat === "proposat" ? "Retira" : "Esborra"}</button>`;
+  }
+  const marc = p.tocaAMi ? "border:2px solid var(--avis-vora)" : p.estat === "proposat" || p.estat === "retorn" ? "border:2px dashed var(--avis-vora)" : "";
+  return h`<section class="targeta" style="${marc}">
+    <div class="fila">${inicial(p.de, "petita")}${I.seg}${inicial(p.a, "petita")}<span class="import-gran">${euros(p.import)}</span></div>
+    <span style="color:var(--suau);font-size:.9rem">${nom(p.de)} ho deixa a ${nom(p.a)} · ${fDiaCurt.format(dataDe(p.data))}${p.nota ? ` · ${p.nota}` : ""}</span>
+    <span class="${p.estat === "actiu" || p.estat === "retornat" ? "" : "estat-pendent"}" style="${p.estat === "retornat" ? "color:var(--suau)" : ""}">${p.estat === "proposat" || p.estat === "retorn" ? I.rellotge : ""}${p.text}</span>
+    ${accions}
+  </section>`;
+}
+
+let sentitPrestec = "deixo";
 function pantPrestecNou() {
-  const tria = (camp, defecte) => h`<div class="fila" role="group">${C.MEMBRES.map((m) => h`<button type="button" class="tria-persona" data-accio="prestec-tria" data-camp="${camp}" data-id="${m.id}" aria-pressed="${m.id === defecte}" aria-label="${m.nom}" style="background:${m.color}">${m.inicial}</button>`)}</div>`;
-  const altre = C.MEMBRES.find((m) => m.id !== jo)?.id;
+  const altres = C.MEMBRES.filter((m) => m.id !== jo);
   return {
     sub: true, pare: "mes", titol: "Nou préstec",
     cos: h`<form id="form-prestec" class="formulari">
-      <div class="camp"><span class="etiq">Qui deixa els diners</span>${tria("de", jo)}</div>
-      <div class="camp"><span class="etiq">A qui</span>${tria("a", altre)}</div>
+      <div class="segmentat" role="group" aria-label="Sentit">
+        <button type="button" data-accio="prestec-sentit" data-s="deixo" aria-pressed="${sentitPrestec === "deixo"}">Jo deixo diners</button>
+        <button type="button" data-accio="prestec-sentit" data-s="em-deixen" aria-pressed="${sentitPrestec === "em-deixen"}">Me'n deixen</button>
+      </div>
+      <div class="camp"><span class="etiq" id="p-qui-etiq">${sentitPrestec === "deixo" ? "A qui" : "Qui te'ls deixa"}</span>
+        <div class="fila" role="group">${altres.map((m, i) => h`<button type="button" class="tria-persona" data-accio="prestec-tria" data-id="${m.id}" aria-pressed="${i === 0}" aria-label="${m.nom}" style="background:${m.color}">${m.inicial}</button>`)}</div></div>
       <div class="camp"><label for="p-import">Import (€)</label><input id="p-import" type="number" min="0.01" step="0.01" required inputmode="decimal"></div>
       <div class="camp"><label for="p-data">Data</label><input id="p-data" type="date" required value="${isoDia(avui())}"></div>
       <div class="camp"><label for="p-nota">Per a què <span class="ajuda">(opcional)</span></label><input id="p-nota" type="text" maxlength="80"></div>
-      <button class="boto primari ample" type="submit">Desa</button>
+      <p class="avis-caixa" id="p-info">${I.rellotge}<span>${nom(altres[0]?.id)} ho haurà de confirmar.</span></p>
+      <button class="boto primari ample" type="submit">Envia per confirmar</button>
     </form>`,
     despres: () => {
       $("#form-prestec").onsubmit = (ev) => {
         ev.preventDefault();
-        const de = $("[data-camp=de][aria-pressed=true]")?.dataset.id;
-        const a = $("[data-camp=a][aria-pressed=true]")?.dataset.id;
-        if (!de || !a || de === a) { avisa("Tria dues persones diferents."); return; }
-        Col.afegeix("prestecs", { de, a, import: Number($("#p-import").value), data: $("#p-data").value, estat: "pendent", nota: $("#p-nota").value.trim() });
-        avisa("Desat.");
+        const altre = $("[data-accio=prestec-tria][aria-pressed=true]")?.dataset.id;
+        if (!altre) { avisa("Tria la persona."); return; }
+        const [de, a] = sentitPrestec === "deixo" ? [jo, altre] : [altre, jo];
+        Col.afegeix("prestecs", { de, a, import: Number($("#p-import").value), data: $("#p-data").value, nota: $("#p-nota").value.trim(), estat: "proposat", per: jo, creat: new Date().toISOString() });
+        avisa(`Enviat. Quan ${nom(altre)} ho confirmi, comptarà.`);
         location.hash = "mes";
       };
     },
@@ -1033,6 +1190,45 @@ const ACCIONS = {
     avisa("Feta. Comptador a zero.");
     render();
   },
+  "tasques-filtre": (el) => { filtreTasques = el.dataset.f; desaPref("tasques-filtre", filtreTasques); render(); },
+  "tasca-per": (el) => { premut(el); if ($("#form-tn")) actualitzaTascaNova(); },
+  "tasca-accepta": (el) => {
+    Col.actualitza("tasques", el.dataset.id, (t) => {
+      t.assignada = { ...t.assignada, estat: "acceptada", quan: new Date().toISOString() };
+      if (t.activa === false) { t.activa = true; if (!(t.fetes ?? []).length) t.creada = new Date().toISOString(); }
+    });
+    avisa("Acceptada. Ja és activa.");
+    render();
+  },
+  "tasca-rebutja": (el) => {
+    Col.actualitza("tasques", el.dataset.id, (t) => {
+      // Si ja era activa (es proposava una tasca existent), torna a quedar lliure.
+      t.assignada = t.activa === false ? { ...t.assignada, estat: "rebutjada", quan: new Date().toISOString() } : null;
+    });
+    avisa("D'acord. Ho veurà qui te l'ha proposada.");
+    render();
+  },
+  "tasca-proposa": (el) => {
+    const per = responsableTriat();
+    if (!per) { avisa("Tria a qui la proposes."); return; }
+    Col.actualitza("tasques", el.dataset.id, (t) => {
+      t.assignada = per === jo
+        ? { persona: jo, estat: "acceptada", per: jo, quan: new Date().toISOString() }
+        : { persona: per, estat: "proposta", per: jo, quan: new Date().toISOString(), nota: $("#t-nota")?.value.trim() ?? "" };
+    });
+    avisa(per === jo ? "Ara és teva." : `Proposada a ${nom(per)}.`);
+    render();
+  },
+  "tasca-retira": (el) => {
+    Col.actualitza("tasques", el.dataset.id, (t) => { t.assignada = null; t.activa = true; });
+    avisa("Proposta retirada. La tasca és lliure.");
+    render();
+  },
+  "tasca-allibera": (el) => {
+    Col.actualitza("tasques", el.dataset.id, (t) => { t.assignada = null; t.activa = true; });
+    avisa("Ara és lliure.");
+    render();
+  },
   "tn-tipus": (el) => { tipusNova = el.dataset.t; premut(el); $("#tn-cada-camp").hidden = tipusNova !== "recurrent"; $("#tn-limit-camp").hidden = tipusNova !== "puntual"; },
   async "tasca-esborra"(el) {
     if (!(await confirma("Esborrar aquesta tasca i el seu historial?"))) return;
@@ -1065,10 +1261,20 @@ const ACCIONS = {
   async copia(el) {
     try { await navigator.clipboard.writeText(el.dataset.text); avisa("Enllaç copiat."); } catch { avisa("No s'ha pogut copiar."); }
   },
-  "prestec-tria": (el) => premut(el),
-  "prestec-retornat": (el) => { Col.actualitza("prestecs", el.dataset.id, (p) => { p.estat = "retornat"; p.retornat = new Date().toISOString(); }); avisa("Marcat com a retornat."); render(); },
+  "prestec-tria": (el) => { premut(el); $("#p-info span").textContent = `${nom(el.dataset.id)} ho haurà de confirmar.`; },
+  "prestec-sentit": (el) => { sentitPrestec = el.dataset.s; premut(el); $("#p-qui-etiq").textContent = sentitPrestec === "deixo" ? "A qui" : "Qui te'ls deixa"; },
+  "prestec-si": (el) => { Col.actualitza("prestecs", el.dataset.id, (p) => { p.estat = "actiu"; p.acceptat = new Date().toISOString(); }); avisa("Confirmat. El préstec ja compta."); render(); },
+  "prestec-no": (el) => { Col.actualitza("prestecs", el.dataset.id, (p) => { p.estat = "rebutjat"; }); avisa("D'acord. Ho veurà qui l'ha creat."); render(); },
+  "prestec-retorn": (el) => {
+    let altre;
+    Col.actualitza("prestecs", el.dataset.id, (p) => { p.estat = "retorn"; p.retornPer = jo; altre = altreDe(p, jo); });
+    avisa(`Quan ${nom(altre)} ho confirmi, quedarà saldat.`);
+    render();
+  },
+  "prestec-retornat-si": (el) => { Col.actualitza("prestecs", el.dataset.id, (p) => { p.estat = "retornat"; p.retornat = new Date().toISOString(); }); avisa("Saldat."); render(); },
+  "prestec-encara": (el) => { Col.actualitza("prestecs", el.dataset.id, (p) => { p.estat = "actiu"; p.retornPer = null; }); avisa("D'acord, continua pendent."); render(); },
   async "prestec-esborra"(el) {
-    if (!(await confirma("Esborrar aquest préstec de l'historial?"))) return;
+    if (!(await confirma("Esborrar aquest préstec?"))) return;
     Col.esborra("prestecs", el.dataset.id);
     render();
   },

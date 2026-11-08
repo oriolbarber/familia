@@ -15,6 +15,7 @@
 | Google Cloud (compte de servei) | https://console.cloud.google.com |
 | Supabase | https://supabase.com/dashboard |
 | Dissenys (llenç) | https://claude.ai/artifact/HuhkiT2afgrYtwWzUTHZs8 |
+| Xat per parlar de l'app (sense canvis de codi) | https://claude.ai/code/session_01StPMafvtrmyGLURM7U46n3 |
 | Xat de la prova de concepte | https://claude.ai/code/session_01StPMaeUJfej54PofYhXXt7 |
 
 <!-- Afegir aquí: URL del projecte Supabase, xats nous de cada fase, etc. -->

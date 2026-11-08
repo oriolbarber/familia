@@ -54,7 +54,7 @@
   // Dades d'exemple (mode prova)
   // =============================================================
   function llavor() {
-    if (local.llegeix("prova:llavor")) return;
+    if (local.llegeix("prova:llavor-v2")) return;
     const avui = new Date(); avui.setHours(0, 0, 0, 0);
     const a = (dies, h, m = 0) => { const d = new Date(avui.getTime() + dies * DIA); d.setHours(h, m, 0, 0); return d.toISOString(); };
     const dl = (avui.getDay() + 6) % 7; // 0 = dilluns
@@ -88,7 +88,10 @@
       { id: nouId(), nom: "Posar rentadores", tipus: "recurrent", cada: 3, creada: fa(30), fetes: [{ persona: ad1, quan: fa(1) }] },
       { id: nouId(), nom: "Passar l'aspiradora", tipus: "recurrent", cada: 5, creada: fa(30), fetes: [{ persona: j2, quan: fa(3) }] },
       { id: nouId(), nom: "Canviar llençols", tipus: "recurrent", cada: 14, creada: fa(30), fetes: [{ persona: ad1, quan: fa(5) }] },
-      { id: nouId(), nom: "Pagar la quota de l'AMPA", tipus: "puntual", limit: isoDia(Date.now() + 8 * DIA), creada: fa(2), fetes: [] },
+      { id: nouId(), nom: "Pagar la quota de l'AMPA", tipus: "puntual", limit: isoDia(Date.now() + 8 * DIA), creada: fa(2), fetes: [], assignada: { persona: ad1, estat: "acceptada", per: ad2, quan: fa(2) } },
+      { id: nouId(), nom: "Treure el gos al vespre", tipus: "recurrent", cada: 1, creada: fa(20), fetes: [{ persona: j1, quan: fa(0) }], assignada: { persona: j1, estat: "acceptada", per: j1, quan: fa(20) } },
+      { id: nouId(), nom: "Regar les plantes", tipus: "recurrent", cada: 4, creada: fa(1), fetes: [], activa: false, assignada: { persona: ad1, estat: "proposta", per: ad2, quan: fa(1), nota: "Aquesta setmana no hi arribo" } },
+      { id: nouId(), nom: "Ordenar l'armari de l'entrada", tipus: "puntual", limit: isoDia(Date.now() + 10 * DIA), creada: fa(1), fetes: [], activa: false, assignada: { persona: j2, estat: "proposta", per: ad1, quan: fa(1) } },
     ]);
     local.escriu("col:compra", ["Pomes|1 kg", "Enciam|", "Plàtans|6", "Llet|6", "Iogurts naturals|8", "Detergent rentadora|"]
       .map((s) => { const [nom, q] = s.split("|"); return { id: nouId(), nom, quantitat: q, comprat: false, quan: fa(1) }; }));
@@ -98,12 +101,14 @@
       { id: nouId(), persona: j1, nom: "Samarreta de l'equip", preu: 30, prioritat: "bastant", enllac: "" },
     ]);
     local.escriu("col:prestecs", [
-      { id: nouId(), de: j1, a: ad1, import: 20, data: isoDia(Date.now() - 5 * DIA), estat: "pendent", nota: "Per a l'aparcament" },
+      { id: nouId(), de: j1, a: ad1, import: 20, data: isoDia(Date.now() - 5 * DIA), estat: "actiu", per: j1, nota: "Per a l'aparcament" },
+      { id: nouId(), de: ad1, a: j2, import: 10, data: isoDia(Date.now() - 1 * DIA), estat: "proposat", per: j2, nota: "Entrades del cine" },
+      { id: nouId(), de: ad2, a: ad1, import: 15, data: isoDia(Date.now() - 12 * DIA), estat: "retorn", per: ad2, retornPer: ad2, nota: "Mercat" },
     ]);
     local.escriu("col:historial", [
       { id: nouId(), titol: "Tornar a les 00:30", persona: j2, tipus: "tard", estat: "confirmat", qui: ad2, quan: fa(8), comentari: "" },
     ]);
-    local.escriu("prova:llavor", true);
+    local.escriu("prova:llavor-v2", true);
   }
 
   // =============================================================
@@ -192,7 +197,7 @@
     reinicia() {
       for (const c of COLS) local.esborra(`col:${c}`);
       local.esborra("prova:esdeveniments");
-      local.esborra("prova:llavor");
+      local.esborra("prova:llavor-v2");
     },
   };
 

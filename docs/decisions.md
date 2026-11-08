@@ -4,7 +4,8 @@ Format: data · decisió · motiu · estat (vigent / pendent de confirmar / subs
 
 | Data | Decisió | Motiu | Estat |
 |---|---|---|---|
-| 2026-11-02 | Google Calendar ("Família") és la font única de l'agenda | Es veu des de Google encara que l'app falli | Vigent |
+| 2026-11-02 | Google Calendar és la font única de l'agenda | Es veu des de Google encara que l'app falli | Vigent |
+| 2026-11-08 | El calendari és **GLOB**, el compartit que ja fa servir la família | No cal canviar d'hàbits ni migrar res | Vigent |
 | 2026-11-02 | Accés a Google amb compte de servei des d'Edge Function; login amb Supabase Auth | Evitar la verificació OAuth i la caducitat en mode de proves | Confirmat en teoria (xat 01); falta la prova real |
 | 2026-11-02 | Autoritzacions només per dormir fora, tornar tard i cost; n'hi ha prou amb un pare/mare | Mínim control necessari | Vigent |
 | 2026-11-02 | Tasques lliures, sense assignació ni punts | Principi "facilitar acords" | Vigent |
@@ -16,6 +17,15 @@ Format: data · decisió · motiu · estat (vigent / pendent de confirmar / subs
 | 2026-11-07 | Push amb `jsr:@negrel/webpush` | Biblioteca feta amb Web Crypto, funciona a Deno; `npm:web-push` depèn de Node | Vigent |
 | 2026-11-07 | Fins a la Fase A, les funcions es protegeixen amb un **codi familiar** (capçalera `x-familia-codi`) i sense verificació JWT | Prova de concepte sense inici de sessió; la Fase A ho substitueix per Supabase Auth | Provisional |
 | 2026-11-07 | Funcions desplegables des de l'editor web de Supabase (un sol fitxer per funció) | No cal instal·lar la CLI | Vigent |
+| 2026-11-08 | Dissenys: Inici «què toca ara» (proposta B); Agenda amb vistes Dia, Setmana (horari) i Mes; filtre per defecte «El meu» (meu + família) | Comentaris de l'Oriol al llenç de dissenys | Vigent |
+| 2026-11-08 | Compra: una sola llista, sense categories | Comentari de l'Oriol | Vigent |
+| 2026-11-08 | «Ara no» en un permís treu l'esdeveniment del calendari amb confirmació lliscant | És destructiu | Vigent |
+| 2026-11-08 | Llindar de cost per demanar permís: 20 € (configurable a `config.js`) | Valor provisional, pendent de confirmar | Provisional |
+| 2026-11-08 | L'estat del permís es desa a l'esdeveniment de Google (propietats privades + «[Pendent]» al títol) | Funciona sense Supabase; el registre complet anirà a Supabase | Vigent |
+| 2026-11-08 | De qui és un esdeveniment creat a Google: pel correu del creador (secret `MEMBRES_CORREUS`) | Els correus no poden anar al repositori públic | Vigent |
+| 2026-11-08 | **Mode prova**: sense Supabase configurat, l'app funciona amb dades d'exemple | Es pot provar i ensenyar a la família abans de configurar res | Vigent |
+| 2026-11-08 | Tasques, compra, desitjos, préstecs i historial de permisos es desen **de moment en cada mòbil**; es compartiran amb Supabase (xat 02) | Primer muntatge usable sense esperar el backend | Provisional |
+| 2026-11-08 | Lletra Atkinson Hyperlegible inclosa a l'app (sense dependències externes) | Llegibilitat i funcionament sense connexió | Vigent |
 
 ## Per què el compte de servei (xat 01)
 

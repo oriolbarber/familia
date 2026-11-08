@@ -1,8 +1,9 @@
 // Service worker · Família (prova de concepte)
 // Puja VERSIO a cada canvi de fitxers perquè els mòbils s'actualitzin.
-const VERSIO = "poc-1";
+const VERSIO = "v1-1";
 const FITXERS = [
-  "./", "index.html", "estil.css", "app.js", "config.js", "manifest.webmanifest",
+  "./", "index.html", "estil.css", "config.js", "js/dades.js", "js/app.js", "manifest.webmanifest",
+  "fonts/atkinson-400.woff2", "fonts/atkinson-700.woff2",
   "icones/icona-192.png", "icones/icona-512.png", "icones/apple-touch-icon.png",
 ];
 

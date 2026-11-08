@@ -5,12 +5,15 @@
 //
 // Secrets necessaris (Supabase › Edge Functions › Secrets):
 //   GOOGLE_SA_JSON      contingut sencer del fitxer JSON de la clau
-//   GOOGLE_CALENDAR_ID  id del calendari «Família» (…@group.calendar.google.com)
+//   GOOGLE_CALENDAR_ID  id del calendari compartit de la família («GLOB»)
+//   MEMBRES_CORREUS     (opcional) {"correu@gmail.com":"id-membre", …} per saber de qui és
+//                       un esdeveniment creat directament a Google Calendar
 //   FAMILIA_CODI        codi compartit que la PWA envia a la capçalera x-familia-codi
 //
 // Rutes:
 //   GET    ?des=ISO&fins=ISO      esdeveniments entre dues dates
-//   POST   {titol, inici, fi, persona}   crea un esdeveniment
+//   POST   {titol, inici, fi, totElDia, persona, lloc, nota, permis}   crea un esdeveniment
+//   PATCH  ?id=EVENT_ID {permis_estat, permis_qui, permis_comentari}   decideix un permís
 //   DELETE ?id=EVENT_ID           esborra un esdeveniment
 // =============================================================
 
@@ -20,7 +23,7 @@ const SCOPE = "https://www.googleapis.com/auth/calendar.events";
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "content-type, x-familia-codi, apikey, authorization",
-  "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
 };
 
 function json(cos: unknown, status = 200): Response {
@@ -105,17 +108,42 @@ async function google(cami: string, opcions: RequestInit = {}): Promise<Response
 
 // ---------- Format que rep la PWA ----------
 
+const PREFIX = "[Pendent] ";
+
+// Correu de Google → id de membre (secret MEMBRES_CORREUS, p. ex. {"nom@gmail.com":"oriol"}).
+// Serveix per saber de qui és un esdeveniment creat fora de l'app (directament a Google Calendar).
+function correus(): Record<string, string> {
+  try { return JSON.parse(Deno.env.get("MEMBRES_CORREUS") ?? "{}"); } catch { return {}; }
+}
+
 // deno-lint-ignore no-explicit-any
-function simplifica(e: any) {
+function simplifica(e: any, mapa = correus()) {
+  const p = e.extendedProperties?.private ?? {};
+  const titol = (e.summary ?? "(sense títol)").replace(PREFIX, "");
   return {
     id: e.id,
-    titol: e.summary ?? "(sense títol)",
+    titol,
     inici: e.start?.dateTime ?? e.start?.date,
     fi: e.end?.dateTime ?? e.end?.date,
     totElDia: !e.start?.dateTime,
     lloc: e.location ?? null,
-    persona: e.extendedProperties?.private?.persona ?? null,
+    nota: p.nota || null,
+    persona: p.persona || mapa[e.creator?.email ?? ""] || null,
+    permis: p.permis_tipus
+      ? {
+        tipus: p.permis_tipus,
+        import: p.permis_import ? Number(p.permis_import) : null,
+        estat: p.permis_estat || "pendent",
+        qui: p.permis_qui || null,
+        comentari: p.permis_comentari || null,
+      }
+      : null,
   };
+}
+
+// deno-lint-ignore no-explicit-any
+function errorGoogle(d: any, status: number) {
+  return json({ error: d?.error?.message ?? "Error de Google" }, status);
 }
 
 // ---------- Servidor ----------
@@ -130,49 +158,82 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
+    const id = url.searchParams.get("id");
 
     if (req.method === "GET") {
       const des = url.searchParams.get("des") ?? new Date().toISOString();
-      const fins = url.searchParams.get("fins") ??
-        new Date(Date.now() + 7 * 864e5).toISOString();
-      const q = new URLSearchParams({
-        timeMin: des,
-        timeMax: fins,
-        singleEvents: "true",
-        orderBy: "startTime",
-        timeZone: TZ,
-        maxResults: "250",
-      });
-      const r = await google(`?${q}`);
-      const d = await r.json();
-      if (!r.ok) return json({ error: d.error?.message ?? "Error de Google" }, r.status);
-      return json({ esdeveniments: (d.items ?? []).map(simplifica) });
+      const fins = url.searchParams.get("fins") ?? new Date(Date.now() + 7 * 864e5).toISOString();
+      const mapa = correus();
+      const items = [];
+      let pagina: string | undefined;
+      do {
+        const q = new URLSearchParams({
+          timeMin: des, timeMax: fins, singleEvents: "true", orderBy: "startTime", timeZone: TZ, maxResults: "250",
+        });
+        if (pagina) q.set("pageToken", pagina);
+        const r = await google(`?${q}`);
+        const d = await r.json();
+        if (!r.ok) return errorGoogle(d, r.status);
+        items.push(...(d.items ?? []));
+        pagina = d.nextPageToken;
+      } while (pagina && items.length < 1000);
+      return json({ esdeveniments: items.filter((e) => e.status !== "cancelled").map((e) => simplifica(e, mapa)) });
     }
 
     if (req.method === "POST") {
-      const { titol, inici, fi, persona } = await req.json();
+      const { titol, inici, fi, totElDia, persona, lloc, nota, permis } = await req.json();
       if (!titol || !inici || !fi) return json({ error: "Calen titol, inici i fi" }, 400);
+      const pendent = permis?.estat === "pendent";
+      const privat: Record<string, string> = { persona: persona ?? "", origen: "app" };
+      if (nota) privat.nota = String(nota).slice(0, 500);
+      if (permis?.tipus) {
+        privat.permis_tipus = String(permis.tipus);
+        privat.permis_estat = pendent ? "pendent" : "confirmat";
+        if (permis.import != null) privat.permis_import = String(permis.import);
+        if (permis.qui) privat.permis_qui = String(permis.qui);
+      }
       const cos = {
-        summary: titol,
-        start: { dateTime: inici, timeZone: TZ },
-        end: { dateTime: fi, timeZone: TZ },
+        summary: (pendent ? PREFIX : "") + titol,
+        location: lloc ?? undefined,
+        start: totElDia ? { date: inici } : { dateTime: inici, timeZone: TZ },
+        end: totElDia ? { date: fi } : { dateTime: fi, timeZone: TZ },
         // Sense «attendees»: un compte de servei no pot convidar persones.
-        extendedProperties: { private: { persona: persona ?? "", origen: "app" } },
+        extendedProperties: { private: privat },
       };
       const r = await google("", { method: "POST", body: JSON.stringify(cos) });
       const d = await r.json();
-      if (!r.ok) return json({ error: d.error?.message ?? "Error de Google" }, r.status);
+      if (!r.ok) return errorGoogle(d, r.status);
       return json({ esdeveniment: simplifica(d) }, 201);
     }
 
+    if (req.method === "PATCH") {
+      // Decisió sobre un permís: {permis_estat:"confirmat", permis_qui, permis_comentari}
+      if (!id) return json({ error: "Falta id" }, 400);
+      const { permis_estat, permis_qui, permis_comentari } = await req.json();
+      const r0 = await google(`/${encodeURIComponent(id)}`);
+      const e = await r0.json();
+      if (!r0.ok) return errorGoogle(e, r0.status);
+      const privat = { ...(e.extendedProperties?.private ?? {}) };
+      privat.permis_estat = permis_estat === "confirmat" ? "confirmat" : "pendent";
+      if (permis_qui) privat.permis_qui = String(permis_qui);
+      if (permis_comentari) privat.permis_comentari = String(permis_comentari).slice(0, 300);
+      const titol = (e.summary ?? "").replace(PREFIX, "");
+      const r = await google(`/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          summary: (privat.permis_estat === "pendent" ? PREFIX : "") + titol,
+          extendedProperties: { private: privat },
+        }),
+      });
+      const d = await r.json();
+      if (!r.ok) return errorGoogle(d, r.status);
+      return json({ esdeveniment: simplifica(d) });
+    }
+
     if (req.method === "DELETE") {
-      const id = url.searchParams.get("id");
       if (!id) return json({ error: "Falta id" }, 400);
       const r = await google(`/${encodeURIComponent(id)}`, { method: "DELETE" });
-      if (!r.ok && r.status !== 410) {
-        const d = await r.json().catch(() => ({}));
-        return json({ error: d.error?.message ?? "Error de Google" }, r.status);
-      }
+      if (!r.ok && r.status !== 410) return errorGoogle(await r.json().catch(() => ({})), r.status);
       return json({ ok: true });
     }
 

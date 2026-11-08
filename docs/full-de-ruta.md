@@ -22,6 +22,14 @@ Cada etapa és **un xat** (prompt a `docs/xats/`). No es comença la següent fi
 - [ ] Push de prova rebut als 4 mòbils (o pla B per correu)
 - **Sortida:** decisió confirmada (o canvi) a `decisions.md`
 
+## 1b · Dissenys i primer muntatge (fet el 8 de novembre)
+
+- [x] Llenç de dissenys i comentaris de l'Oriol
+- [x] App navegable amb totes les seccions (Inici, Agenda dia/setmana/mes, permisos, tasques, compra, desitjos, préstecs, menú ⋮)
+- [x] Mode prova amb dades d'exemple; mode connectat amb GLOB via `calendar`
+- [ ] Noms reals de la família a `config.js`
+- [ ] Confirmar el llindar de cost (ara 20 €)
+
 ## 2 · Model de dades — `xats/02-model-de-dades.md`
 
 - [ ] Esquema: membres, autoritzacions, tasques, execucions, llistes, ítems, desitjos, préstecs, subscripcions push

@@ -12,7 +12,7 @@ Especificació completa: `docs/proposta-v2.md`. Estat i fases: `docs/full-de-rut
 |---|---|
 | Interfície | HTML/CSS/JS **sense framework**, mòbil primer (`app/`) |
 | Dades i usuaris | Supabase (Postgres + Auth + RLS) (`supabase/migrations/`) |
-| Agenda | Google Calendar API, calendari compartit "Família", via **compte de servei** cridat des d'una Edge Function. Els usuaris **no** entren amb Google |
+| Agenda | Google Calendar API, calendari compartit de la família **"GLOB"**, via **compte de servei** cridat des d'una Edge Function. Els usuaris **no** entren amb Google |
 | Lògica de servidor | Supabase Edge Functions + tasca programada (`supabase/functions/`) |
 | Allotjament | GitHub Pages (HTTPS) |
 | Instal·lació | `manifest.webmanifest` + `sw.js` (pantalla d'inici i ús sense connexió) |
@@ -20,12 +20,13 @@ Especificació completa: `docs/proposta-v2.md`. Estat i fases: `docs/full-de-rut
 - Google Calendar és la **font única** de l'agenda. Supabase només desa el que Google no sap: persona propietària, estat d'autorització, historial de rebutjades.
 - La clau del compte de servei i la `service_role` de Supabase **mai** al client ni al repositori: només com a secrets de les Edge Functions.
 - La clau `anon` de Supabase sí que pot anar al client; la seguretat la fa l'RLS.
+- `app/js/dades.js` és l'única capa que parla amb Google/Supabase; sense Supabase configurat l'app va en **mode prova** amb dades d'exemple.
 - Sense connexió: la PWA mostra l'última còpia desada (IndexedDB) i envia els canvis en recuperar la xarxa.
 
 ## Estructura del repositori
 
 ```
-app/                  PWA estàtica (index.html, css, js, sw.js, manifest, icones)
+app/                  PWA estàtica (index.html, estil.css, js/dades.js, js/app.js, sw.js, manifest, icones, fonts)
 supabase/migrations/  SQL numerat (esquema, RLS, funcions)
 supabase/functions/   Edge Functions (calendar, resum-mati, ...)
 docs/                 Proposta, full de ruta, decisions, prompts dels xats

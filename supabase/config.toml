@@ -1,0 +1,9 @@
+# Només rellevant si es desplega amb la CLI de Supabase.
+# Les funcions es protegeixen amb el codi familiar (capçalera x-familia-codi),
+# no amb el JWT de Supabase, fins que la Fase A afegeixi l'inici de sessió.
+
+[functions.calendar]
+verify_jwt = false
+
+[functions.push-prova]
+verify_jwt = false

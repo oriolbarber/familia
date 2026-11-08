@@ -14,9 +14,10 @@ Cada etapa és **un xat** (prompt a `docs/xats/`). No es comença la següent fi
 
 ## 1 · Prova de concepte — `xats/01-prova-de-concepte.md`
 
-- [ ] Confirmar que el compte de servei pot llegir/escriure el calendari "Família" sense caducar
-- [ ] PWA mínima instal·lable a GitHub Pages
-- [ ] Llegeix els esdeveniments de la setmana via Edge Function
+- [x] Confirmar a la documentació que el compte de servei pot llegir/escriure el calendari "Família" sense caducar
+- [x] Codi: Edge Functions `calendar` i `push-prova`, PWA mínima, eina VAPID, publicació a Pages (`docs/guia-configuracio.md`)
+- [ ] Configuració real de Google, Supabase i GitHub (Oriol, seguint la guia)
+- [ ] Llegeix i escriu els esdeveniments de la setmana als 4 mòbils
 - [ ] Push de prova rebut als 4 mòbils (o pla B per correu)
 - **Sortida:** decisió confirmada (o canvi) a `decisions.md`
 

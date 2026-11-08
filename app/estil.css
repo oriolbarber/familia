@@ -1,0 +1,146 @@
+/* ===== Variables i temes ===== */
+:root {
+  --fons: #f4f5f7;
+  --targeta: #ffffff;
+  --text: #15171a;
+  --suau: #5b6270;
+  --vora: #d9dce2;
+  --primari: #2f6fd6;
+  --primari-text: #ffffff;
+  --avis-fons: #fff4d6;
+  --avis-text: #6b4a00;
+  --ok: #15803d;
+  --error: #b91c1c;
+  --mida: 18px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fons: #0f1115;
+    --targeta: #1a1d23;
+    --text: #f1f3f6;
+    --suau: #a7aebb;
+    --vora: #2d323b;
+    --primari: #6ea0ff;
+    --primari-text: #0b1220;
+    --avis-fons: #3a2f10;
+    --avis-text: #ffe2a0;
+    --ok: #4ade80;
+    --error: #f87171;
+    color-scheme: dark;
+  }
+}
+
+/* ===== Base ===== */
+* { box-sizing: border-box; }
+html { font-size: var(--mida); -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--fons);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.4;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+main { max-width: 640px; margin: 0 auto; padding: 12px 16px 32px; }
+h1, h2 { margin: 0; }
+h1 { font-size: 1.4rem; }
+h2 { font-size: 1.15rem; }
+p { margin: .5rem 0; }
+
+/* ===== Barra superior ===== */
+.barra {
+  position: sticky; top: 0; z-index: 2;
+  display: flex; align-items: center; gap: 10px;
+  padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+  background: var(--primari); color: var(--primari-text);
+}
+.etiqueta { font-size: .75rem; border: 1px solid currentColor; border-radius: 99px; padding: 1px 8px; }
+.xarxa { margin-left: auto; font-size: .8rem; font-weight: 600; }
+
+/* ===== Blocs ===== */
+.targeta {
+  background: var(--targeta); border: 1px solid var(--vora);
+  border-radius: 14px; padding: 14px; margin: 12px 0;
+}
+.targeta > h2 { margin-bottom: 8px; }
+summary { font-weight: 600; font-size: 1.05rem; cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+.fila { display: flex; gap: 10px; align-items: center; }
+.entre { justify-content: space-between; }
+.avis { background: var(--avis-fons); color: var(--avis-text); border-radius: 10px; padding: 10px 12px; }
+.estat { color: var(--suau); }
+
+/* ===== Controls ===== */
+button, input { font: inherit; }
+button {
+  min-height: 48px; padding: 0 18px; border-radius: 12px;
+  border: 1px solid var(--vora); background: var(--targeta); color: var(--text);
+  font-weight: 600; cursor: pointer;
+}
+button.primari { background: var(--primari); color: var(--primari-text); border-color: transparent; }
+button.ample { width: 100%; margin-top: 10px; }
+button.icona { min-width: 48px; padding: 0; font-size: 1.6rem; line-height: 1; }
+button:disabled { opacity: .5; }
+input[type=password], input[type=text] {
+  flex: 1; min-width: 0; min-height: 48px; padding: 0 12px; border-radius: 12px;
+  border: 1px solid var(--vora); background: var(--fons); color: var(--text);
+}
+
+/* ===== Membres (color + inicial) ===== */
+.xips { display: flex; flex-wrap: wrap; gap: 8px; }
+.xip {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 48px; padding: 0 14px 0 6px; border-radius: 99px;
+}
+.xip[aria-pressed=true] { outline: 3px solid var(--primari); outline-offset: 1px; }
+.inicial {
+  display: inline-grid; place-items: center; flex: none;
+  width: 34px; height: 34px; border-radius: 50%;
+  color: #fff; font-weight: 700; font-size: .95rem;
+}
+
+/* ===== Agenda ===== */
+.agenda { list-style: none; margin: 8px 0 0; padding: 0; }
+.dia { margin-top: 12px; font-weight: 700; color: var(--suau); }
+.dia.avui { color: var(--primari); }
+.esdeveniment {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid var(--vora);
+}
+.esdeveniment .hora { font-variant-numeric: tabular-nums; min-width: 3.2em; font-weight: 600; }
+.esdeveniment .titol { flex: 1; }
+.esdeveniment button { min-height: 44px; min-width: 44px; padding: 0 10px; }
+.buit { color: var(--suau); padding: 8px 0; }
+
+/* ===== Diagnòstic ===== */
+.diagnostic { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 8px 0 0; }
+.diagnostic dt { color: var(--suau); }
+.diagnostic dd { margin: 0; font-weight: 600; word-break: break-word; }
+
+/* ===== Missatge flotant ===== */
+.toast {
+  position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom));
+  max-width: 600px; margin: 0 auto; padding: 14px 16px; border-radius: 12px;
+  background: var(--text); color: var(--fons); font-weight: 600; z-index: 10;
+}
+
+/* ===== Confirmació lliscant ===== */
+dialog {
+  border: none; border-radius: 16px; padding: 18px; width: min(92vw, 420px);
+  background: var(--targeta); color: var(--text);
+}
+dialog::backdrop { background: rgb(0 0 0 / .5); }
+.llisca { position: relative; margin-top: 12px; }
+.llisca span {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  pointer-events: none; color: var(--suau); font-weight: 600;
+}
+.llisca input {
+  -webkit-appearance: none; appearance: none; width: 100%; height: 56px; margin: 0;
+  border-radius: 99px; background: var(--fons); border: 1px solid var(--vora);
+}
+.llisca input::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 52px; height: 52px; border-radius: 50%;
+  background: var(--error); position: relative; z-index: 1;
+}
+.llisca input::-moz-range-thumb { width: 52px; height: 52px; border: none; border-radius: 50%; background: var(--error); }

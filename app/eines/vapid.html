@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Claus VAPID</title>
+  <style>
+    :root { --fons:#f4f5f7; --text:#15171a; --vora:#d9dce2; --primari:#2f6fd6; --targeta:#fff; color-scheme: light; }
+    @media (prefers-color-scheme: dark) { :root { --fons:#0f1115; --text:#f1f3f6; --vora:#2d323b; --primari:#6ea0ff; --targeta:#1a1d23; color-scheme: dark; } }
+    body { margin:0; background:var(--fons); color:var(--text); font:18px/1.4 system-ui, sans-serif; }
+    main { max-width:720px; margin:0 auto; padding:16px; }
+    textarea { width:100%; min-height:7em; font:14px ui-monospace, monospace; padding:10px; border-radius:10px; border:1px solid var(--vora); background:var(--targeta); color:var(--text); }
+    button { min-height:48px; padding:0 18px; border-radius:12px; border:none; background:var(--primari); color:#fff; font:inherit; font-weight:600; }
+    label { display:block; font-weight:600; margin:16px 0 6px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Claus VAPID</h1>
+  <p>Les claus es generen en aquest navegador i no s'envien enlloc. Fes-ho <b>una sola vegada</b>: si les canvies, cal tornar a activar els avisos a tots els mòbils.</p>
+  <button id="genera">Genera</button>
+
+  <label for="privada">1 · Secret <code>VAPID_KEYS</code> a Supabase (privat)</label>
+  <textarea id="privada" readonly></textarea>
+
+  <label for="publica">2 · <code>VAPID_PUBLICA</code> a <code>config.js</code> (públic)</label>
+  <textarea id="publica" readonly style="min-height:3em"></textarea>
+</main>
+<script>
+  const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  document.getElementById("genera").onclick = async () => {
+    const parell = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+    const publicKey = await crypto.subtle.exportKey("jwk", parell.publicKey);
+    const privateKey = await crypto.subtle.exportKey("jwk", parell.privateKey);
+    const raw = await crypto.subtle.exportKey("raw", parell.publicKey);
+    document.getElementById("privada").value = JSON.stringify({ publicKey, privateKey });
+    document.getElementById("publica").value = b64url(raw);
+  };
+</script>
+</body>
+</html>

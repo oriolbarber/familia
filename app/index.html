@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Família</title>
+  <meta name="theme-color" content="#2f6fd6">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icones/icona-192.png">
+  <link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Família">
+  <link rel="stylesheet" href="estil.css">
+</head>
+<body>
+  <header class="barra">
+    <h1>Família</h1>
+    <span class="etiqueta">Prova</span>
+    <span id="estat-xarxa" class="xarxa" hidden>Sense connexió</span>
+  </header>
+
+  <main>
+    <!-- Codi familiar (només la primera vegada) -->
+    <section id="pantalla-codi" class="targeta" hidden>
+      <h2>Entra</h2>
+      <p>Escriu el codi de la família.</p>
+      <form id="form-codi" class="fila">
+        <input id="camp-codi" type="password" autocomplete="current-password" required placeholder="Codi">
+        <button class="primari">Entra</button>
+      </form>
+    </section>
+
+    <div id="pantalla-app" hidden>
+      <!-- Qui ets -->
+      <section class="targeta">
+        <h2>Qui ets?</h2>
+        <div id="membres" class="xips"></div>
+      </section>
+
+      <!-- Agenda -->
+      <section class="targeta">
+        <div class="fila entre">
+          <button id="setmana-ant" class="icona" aria-label="Setmana anterior">‹</button>
+          <h2 id="titol-setmana">Aquesta setmana</h2>
+          <button id="setmana-seg" class="icona" aria-label="Setmana següent">›</button>
+        </div>
+        <p id="avis-agenda" class="avis" hidden></p>
+        <ol id="agenda" class="agenda"></ol>
+        <button id="crea-prova" class="secundari ample">Crea un esdeveniment de prova</button>
+      </section>
+
+      <!-- Avisos -->
+      <section class="targeta">
+        <h2>Avisos</h2>
+        <p id="avis-ios" class="avis" hidden>
+          A l'iPhone: toca <b>Compartir</b> → <b>Afegeix a la pantalla d'inici</b>, obre l'app des de la icona i torna aquí.
+        </p>
+        <p id="estat-push" class="estat"></p>
+        <div class="fila">
+          <button id="activa-push" class="primari">Activa els avisos</button>
+          <button id="prova-push" class="secundari" hidden>Prova</button>
+        </div>
+        <button id="prova-tothom" class="secundari ample" hidden>Envia una prova a tothom</button>
+      </section>
+
+      <details class="targeta">
+        <summary>Diagnòstic</summary>
+        <dl id="diagnostic" class="diagnostic"></dl>
+        <button id="surt" class="secundari ample">Oblida el codi</button>
+      </details>
+    </div>
+  </main>
+
+  <div id="avis-flotant" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <!-- Confirmació lliscant per a accions destructives -->
+  <dialog id="dialeg-esborra">
+    <p id="dialeg-text"></p>
+    <div class="llisca">
+      <input id="llisca" type="range" min="0" max="100" value="0" aria-label="Llisca per esborrar">
+      <span>Llisca per esborrar →</span>
+    </div>
+    <button id="dialeg-cancel" class="secundari ample">Cancel·la</button>
+  </dialog>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

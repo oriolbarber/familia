@@ -14,6 +14,9 @@
 // Automàtics de Supabase: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 //
 // POST {persona, text, fitxers: [{media_type, data(base64)}], avui: "AAAA-MM-DD", membres: [...]}
+// POST {persona, mode: "decisions", decisions: [{consulta, resum, tipus, accio, proposta, final}]}
+//      desa què s'ha fet amb cada proposta (acceptat / editat / descartat) per millorar el context
+// POST {persona, mode: "exporta", des: "AAAA-MM-DD"}  retorna les decisions i el context actual
 // =============================================================
 
 import Anthropic from "npm:@anthropic-ai/sdk@1.10.0";
@@ -109,6 +112,34 @@ Deno.serve(async (req) => {
     const membres: Membre[] = (Array.isArray(cos.membres) ? cos.membres : []).slice(0, 10)
       .map((m: Membre) => ({ id: String(m.id).slice(0, 40), nom: String(m.nom).slice(0, 40), rol: String(m.rol).slice(0, 10) }));
     if (!persona) return json({ error: "Falta qui ho envia" }, 400);
+
+    // --- Aprenentatge: decisions sobre les propostes (sense imatges) ---
+    if (cos.mode === "decisions") {
+      const files = (Array.isArray(cos.decisions) ? cos.decisions : []).slice(0, 50).map((d: Record<string, unknown>) => ({
+        persona,
+        consulta: String(d.consulta ?? "").slice(0, 1000),
+        resum: String(d.resum ?? "").slice(0, 300),
+        tipus: String(d.tipus),
+        accio: String(d.accio),
+        proposta: d.proposta ?? {},
+        final: d.final ?? null,
+      })).filter((d: { tipus: string; accio: string }) =>
+        ["esdeveniment", "compra", "tasca"].includes(d.tipus) && ["acceptat", "editat", "descartat"].includes(d.accio));
+      if (files.length) {
+        const { error } = await db.from("assistent_decisions").insert(files);
+        if (error) return json({ error: error.message }, 500);
+      }
+      return json({ ok: true, desades: files.length });
+    }
+    if (cos.mode === "exporta") {
+      const des = /^\d{4}-\d{2}-\d{2}$/.test(cos.des) ? cos.des : new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
+      const { data, error } = await db.from("assistent_decisions").select("quan, persona, consulta, resum, tipus, accio, proposta, final")
+        .gte("quan", des).order("quan").limit(2000);
+      if (error) return json({ error: error.message }, 500);
+      const usos = await db.from("assistent_usos").select("persona, tokens_entrada, tokens_sortida").gte("quan", des).limit(5000);
+      return json({ des, decisions: data, usos: usos.data ?? [], context_actual: CONTEXT });
+    }
+
     if (!text.trim() && !fitxers.length) return json({ error: "Envia un text o una imatge" }, 400);
     for (const f of fitxers) {
       if (!TIPUS.has(f.media_type)) return json({ error: `Tipus de fitxer no admès: ${f.media_type}` }, 400);

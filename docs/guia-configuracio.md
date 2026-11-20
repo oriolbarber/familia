@@ -112,7 +112,7 @@ L'assistent fa servir **Claude Haiku 5.5** a través de l'API d'Anthropic. Cada 
 2. **Límit de despesa.** A **Limits** (o *Spend limits*), posa un límit mensual de **2 $**.
 3. **Clau.** A **API Keys → Create Key**, nom `familia-assistent`. Copia-la (només es veu un cop). **No l'enviïs per xat ni la posis al repositori.**
 4. **Secret a Supabase.** Edge Functions → Secrets → `ANTHROPIC_API_KEY` = la clau.
-5. **Taula d'usos.** SQL Editor → executa `supabase/migrations/0002_assistent.sql`.
+5. **Taules.** SQL Editor → executa `supabase/migrations/0002_assistent.sql` i després `supabase/migrations/0003_assistent_decisions.sql`.
 6. **Funció.** Edge Functions → Deploy a new function → Via Editor → nom `assistent` → enganxa `supabase/functions/assistent/index.ts` → **Deploy**. A **Details**, desactiva **Enforce JWT verification**.
 7. **Prova.** A l'app, toca la icona ✦ (Inici, Agenda o Compra), fes una foto d'una circular o escriu «dijous metge de la Bruna a les 5 i mitja» → **Interpreta**.
 
@@ -136,3 +136,14 @@ Per veure el consum del mes, a l'SQL Editor:
 select persona, count(*) usos, sum(tokens_entrada) entrada, sum(tokens_sortida) sortida
 from assistent_usos where quan >= date_trunc('month', now()) group by persona;
 ```
+
+### Millorar l'assistent amb l'ús (cada 1–2 mesos)
+
+Cada vegada que acceptes, edites o descartes una proposta, es desa a Supabase. Només el text i les propostes, mai les fotos.
+
+1. A l'app (només els adults): ⋮ → Dades i còpia → **Descarrega l'aprenentatge**.
+2. Obre un xat nou amb el prompt de `docs/xats/08-revisio-assistent.md` i adjunta-hi el fitxer.
+3. Enganxa el nou text al secret `ASSISTENT_CONTEXT` de Supabase.
+4. Si vols, esborra les decisions antigues (consulta al final de `0003_assistent_decisions.sql`).
+
+El fitxer conté informació personal: no el pugis al repositori.

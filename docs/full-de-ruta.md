@@ -81,4 +81,7 @@ Cada etapa és **un xat** (prompt a `docs/xats/`). No es comença la següent fi
 - [ ] Compte d'Anthropic, crèdit, límit de 2 $/mes i secret `ANTHROPIC_API_KEY` (Oriol, guia pas 9)
 - [ ] Taula `assistent_usos` i desplegament de la funció (guia pas 9)
 - [ ] Provar-ho amb fotos reals (circulars, WhatsApp, llistes a mà)
+- [x] Registre de decisions (acceptat / editat / descartat) i exportació des de l'app
+- [ ] Taula `assistent_decisions` (guia pas 9) i redesplegar la funció `assistent`
+- [ ] Primera revisió del context amb el xat 08, al cap d'un mes d'ús
 - [ ] Més endavant: compartir des de la galeria a Android (Web Share Target)

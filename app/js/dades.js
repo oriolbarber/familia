@@ -177,6 +177,20 @@
   // Assistent (funció «assistent» → Claude Haiku 5.5)
   // =============================================================
   const Assistent = {
+    // Decisions sobre les propostes (aprenentatge). En mode prova es desen en aquest navegador.
+    async decisions(persona, decisions) {
+      if (MODE_PROVA) {
+        const l = local.llegeix("prova:decisions", []);
+        for (const d of decisions) l.push({ quan: new Date().toISOString(), persona, ...d });
+        local.escriu("prova:decisions", l.slice(-500));
+        return { ok: true };
+      }
+      return crida("assistent", { metode: "POST", cos: { persona, mode: "decisions", decisions } });
+    },
+    async exporta(persona) {
+      if (MODE_PROVA) return { des: isoDia(Date.now() - 90 * DIA), decisions: local.llegeix("prova:decisions", []), usos: [], context_actual: "(mode prova)" };
+      return crida("assistent", { metode: "POST", cos: { persona, mode: "exporta", des: isoDia(Date.now() - 90 * DIA) } });
+    },
     async interpreta(cos) {
       if (!MODE_PROVA) return crida("assistent", { metode: "POST", cos });
       // Mode prova: resposta d'exemple fixa, per veure com funciona la pantalla

@@ -524,7 +524,15 @@ async function desaNou(ev) {
     if (e.permis?.estat === "confirmat") Col.afegeix("historial", { titol: e.titol, persona: e.persona, tipus: e.permis.tipus, estat: "confirmat", qui: jo, quan: new Date().toISOString(), comentari: "Creat per un adult" });
     avisa(e.permis?.estat === "pendent" ? "Enviat. Esperant permís." : "Desat.");
     ag.dia = mitjanit(dataDe(dIni));
-    if (nouOrigen) { asAfegits.add("e" + nouOrigen.index); nouOrigen = null; location.hash = "assistent"; }
+    if (nouOrigen) {
+      const prop = asProposta?.esdeveniments[nouOrigen.index];
+      if (prop) {
+        const final = { titol: e.titol, persona: e.persona ?? "", data: dIni, data_fi: dFi !== dIni ? dFi : "", hora_inici: tot ? "" : $("#n-hini").value, hora_fi: tot ? "" : $("#n-hfi").value, lloc: e.lloc ?? "", permis: e.permis?.tipus ?? "" };
+        const igual = final.titol === prop.titol && final.persona === (prop.persona || "") && final.data === prop.data && final.hora_inici === prop.hora_inici && final.lloc === (prop.lloc || "");
+        registraDecisions([{ tipus: "esdeveniment", accio: igual ? "acceptat" : "editat", proposta: prop, final: igual ? null : final }]);
+      }
+      asAfegits.add("e" + nouOrigen.index); nouOrigen = null; location.hash = "assistent";
+    }
     else location.hash = "agenda";
   } catch (err) { avisa(err.message); b.disabled = false; }
 }
@@ -984,6 +992,13 @@ let asProposta = null;   // última resposta
 let asAfegits = new Set(); // claus "e0", "t1", "compra"
 let asCarregant = false;
 let nouOrigen = null;    // { index } quan el formulari «Nou» ve de l'assistent
+let asConsulta = "";     // text de la consulta que ha generat la proposta (per a l'aprenentatge)
+
+// Desa què s'ha fet amb una proposta (acceptat / editat / descartat). No bloqueja mai l'usuari.
+function registraDecisions(decisions) {
+  if (!decisions.length) return;
+  Dades.Assistent.decisions(jo, decisions.map((d) => ({ consulta: asConsulta, resum: asProposta?.resum ?? "", ...d }))).catch(() => {});
+}
 
 const MAX_COSTAT = 1600;
 
@@ -1029,6 +1044,7 @@ function pantAssistent() {
   const p = asProposta;
   const fet = (k) => asAfegits.has(k);
   const marcaFet = h`<span class="fila" style="justify-content:center;color:var(--suau);font-weight:700">${I.ok}Afegit</span>`;
+  const marcaDescartat = h`<span class="fila" style="justify-content:center;color:var(--suau)">Descartat</span>`;
   const resultat = !p ? "" : h`<div class="seccio">
     <h2>Proposta</h2>
     <p>${p.resum}</p>
@@ -1036,17 +1052,23 @@ function pantAssistent() {
     ${p.esdeveniments.map((e, i) => h`<section class="targeta">
       <div class="fila">${inicial(membre(e.persona) ? e.persona : null)}<div style="display:flex;flex-direction:column;min-width:0"><b style="overflow-wrap:anywhere">${e.titol}</b><span style="color:var(--suau);font-size:.9rem">${quanProposta(e)}${e.lloc ? ` · ${e.lloc}` : ""}</span></div></div>
       ${e.nota ? h`<span style="font-size:.9rem">${e.nota}</span>` : ""}
-      ${fet("e" + i) ? marcaFet : esAdult()
-        ? h`<div class="graella2"><button class="boto" data-accio="as-edita" data-i="${i}">Edita</button><button class="boto primari" data-accio="as-afegeix-esdev" data-i="${i}">Afegeix</button></div>`
-        : h`<button class="boto primari ample" data-accio="as-edita" data-i="${i}">Revisa i afegeix</button>`}
+      ${fet("e" + i) ? marcaFet : fet("x" + i) ? marcaDescartat : esAdult()
+        ? h`<div class="graella3"><button class="boto" data-accio="as-descarta" data-k="e" data-i="${i}">Descarta</button><button class="boto" data-accio="as-edita" data-i="${i}">Edita</button><button class="boto primari" data-accio="as-afegeix-esdev" data-i="${i}">Afegeix</button></div>`
+        : h`<div class="graella2"><button class="boto" data-accio="as-descarta" data-k="e" data-i="${i}">Descarta</button><button class="boto primari" data-accio="as-edita" data-i="${i}">Revisa i afegeix</button></div>`}
     </section>`)}
     ${p.compra.length ? h`<section class="targeta"><b>Per a la compra</b>
-      <div class="llista">${p.compra.map((c, i) => h`<label><input type="checkbox" class="as-compra" data-i="${i}" ${fet("compra") ? raw("disabled") : raw("checked")}><span class="nom">${c.nom}</span>${c.quantitat ? h`<span class="quant">${c.quantitat}</span>` : ""}</label>`)}</div>
+      ${fet("compra") ? "" : h`<span style="color:var(--suau);font-size:.85rem">Pots corregir els noms. Desmarca el que no calgui.</span>`}
+      <div class="llista">${p.compra.map((c, i) => fet("compra")
+        ? h`<label style="cursor:default"><span class="nom">${c.nom}</span>${c.quantitat ? h`<span class="quant">${c.quantitat}</span>` : ""}</label>`
+        : h`<div class="fila" style="min-height:60px;padding:0 10px;border-bottom:1px solid var(--linia);gap:8px">
+            <input type="checkbox" class="as-compra" data-i="${i}" checked aria-label="Inclou ${c.nom}" style="width:28px;height:28px;accent-color:var(--primari);flex:none">
+            <input type="text" class="as-compra-nom" data-i="${i}" value="${c.nom}" aria-label="Nom" style="flex:3;min-height:44px">
+            <input type="text" class="as-compra-q" data-i="${i}" value="${c.quantitat}" aria-label="Quantitat" placeholder="Quant." style="flex:1;min-height:44px;padding:0 8px"></div>`)}</div>
       ${fet("compra") ? marcaFet : h`<button class="boto primari ample" data-accio="as-afegeix-compra">Afegeix a la compra</button>`}
     </section>` : ""}
     ${p.tasques.map((t, i) => h`<section class="targeta">
       <b>${t.nom}</b><span style="color:var(--suau);font-size:.9rem">Tasca · ${t.tipus === "recurrent" ? `cada ${t.cada_dies || 7} dies` : t.data_limit ? `abans del ${fDiaCurt.format(dataDe(t.data_limit))}` : "un sol cop"}</span>
-      ${fet("t" + i) ? marcaFet : h`<button class="boto primari ample" data-accio="as-afegeix-tasca" data-i="${i}">Afegeix com a tasca lliure</button>`}
+      ${fet("t" + i) ? marcaFet : fet("y" + i) ? marcaDescartat : h`<div class="graella2"><button class="boto" data-accio="as-descarta" data-k="t" data-i="${i}">Descarta</button><button class="boto primari" data-accio="as-afegeix-tasca" data-i="${i}">Afegeix</button></div>`}
     </section>`)}
     ${!p.esdeveniments.length && !p.compra.length && !p.tasques.length ? h`<p class="buit">No hi he trobat res per afegir.</p>` : ""}
     <button class="boto ample" data-accio="as-nou">Comença de nou</button>
@@ -1182,6 +1204,9 @@ function pantDades() {
       <button class="boto ample" data-accio="exporta">Desa una còpia (fitxer)</button>
       <label class="boto ample" for="fitxer-importa">Recupera una còpia</label>
       <input id="fitxer-importa" type="file" accept="application/json,.json" class="oculta" data-accio="importa">
+      ${esAdult() ? h`<div class="seccio"><h2>Aprenentatge de l'assistent</h2>
+        <p style="color:var(--suau);font-size:.9rem">Fitxer amb el que s'ha acceptat, editat o descartat dels últims 3 mesos. Porta'l al xat de revisió per millorar el context de l'assistent.</p>
+        <button class="boto ample" data-accio="exporta-aprenentatge">Descarrega l'aprenentatge</button></div>` : ""}
       <button class="boto perill ample" data-accio="reinicia">${MODE_PROVA ? "Torna a les dades d'exemple" : "Esborra les dades d'aquest mòbil"}</button>
     </div>`,
   };
@@ -1314,7 +1339,7 @@ const ACCIONS = {
         membres: C.MEMBRES.map(({ id, nom, rol }) => ({ id, nom, rol })),
         fitxers: asFitxers.map(({ media_type, data }) => ({ media_type, data })),
       });
-      asProposta = d.proposta; asAfegits = new Set();
+      asProposta = d.proposta; asAfegits = new Set(); asConsulta = asText.slice(0, 1000);
       if (d.limit && d.usos >= d.limit - 3) avisa(`Et queden ${d.limit - d.usos} consultes avui.`);
     } catch (e) { avisa(e.message); }
     asCarregant = false; render();
@@ -1323,13 +1348,29 @@ const ACCIONS = {
   async "as-afegeix-esdev"(el) {
     const i = Number(el.dataset.i);
     el.disabled = true;
-    try { await Agenda.crea(esdevDeProposta(asProposta.esdeveniments[i])); asAfegits.add("e" + i); avisa("Afegit a l'agenda."); }
+    try {
+      const e = esdevDeProposta(asProposta.esdeveniments[i]);
+      await Agenda.crea(e); asAfegits.add("e" + i); avisa("Afegit a l'agenda.");
+      registraDecisions([{ tipus: "esdeveniment", accio: "acceptat", proposta: asProposta.esdeveniments[i], final: null }]);
+    }
     catch (e) { avisa(e.message); }
     render();
   },
   "as-afegeix-compra": () => {
-    const triats = [...document.querySelectorAll(".as-compra:checked")].map((x) => asProposta.compra[Number(x.dataset.i)]);
+    const decisions = [], triats = [];
+    asProposta.compra.forEach((c, i) => {
+      const inclou = $(`.as-compra[data-i="${i}"]`)?.checked;
+      const nomFinal = $(`.as-compra-nom[data-i="${i}"]`)?.value.trim() || c.nom;
+      const qFinal = $(`.as-compra-q[data-i="${i}"]`)?.value.trim() ?? c.quantitat;
+      if (!inclou) { decisions.push({ tipus: "compra", accio: "descartat", proposta: c, final: null }); return; }
+      const editat = nomFinal !== c.nom || qFinal !== c.quantitat;
+      decisions.push({ tipus: "compra", accio: editat ? "editat" : "acceptat", proposta: c, final: editat ? { nom: nomFinal, quantitat: qFinal } : null });
+      triats.push({ nom: nomFinal, quantitat: qFinal });
+      asProposta.compra[i] = { nom: nomFinal, quantitat: qFinal };
+    });
+    asProposta.compra = asProposta.compra.filter((_, i) => decisions[i].accio !== "descartat");
     for (const c of triats) Col.afegeix("compra", { nom: c.nom, quantitat: c.quantitat, comprat: false, quan: new Date().toISOString(), qui: jo });
+    registraDecisions(decisions);
     asAfegits.add("compra");
     avisa(`${plural(triats.length, "cosa afegida", "coses afegides")} a la compra.`);
     render();
@@ -1341,7 +1382,14 @@ const ACCIONS = {
     else base.limit = t.data_limit || isoDia(sumaDies(avui(), 7));
     Col.afegeix("tasques", base);
     asAfegits.add("t" + i);
+    registraDecisions([{ tipus: "tasca", accio: "acceptat", proposta: t, final: null }]);
     avisa("Tasca afegida.");
+    render();
+  },
+  "as-descarta": (el) => {
+    const i = Number(el.dataset.i), esdev = el.dataset.k === "e";
+    asAfegits.add((esdev ? "x" : "y") + i);
+    registraDecisions([{ tipus: esdev ? "esdeveniment" : "tasca", accio: "descartat", proposta: esdev ? asProposta.esdeveniments[i] : asProposta.tasques[i], final: null }]);
     render();
   },
   "as-nou": () => { asText = ""; asFitxers = []; asProposta = null; asAfegits = new Set(); render(); },
@@ -1456,6 +1504,18 @@ const ACCIONS = {
     if (!(await confirma("Tancar la sessió en aquest mòbil?", "Llisca per tancar →"))) return;
     L.esborra("codi");
     render();
+  },
+  async "exporta-aprenentatge"() {
+    try {
+      const d = await Dades.Assistent.exporta(jo);
+      const blob = new Blob([JSON.stringify(d, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `assistent-aprenentatge-${isoDia(new Date())}.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      avisa(`Descarregat: ${plural(d.decisions.length, "decisió", "decisions")}.`);
+    } catch (e) { avisa(e.message); }
   },
   exporta: () => {
     const blob = new Blob([JSON.stringify(Col.exporta(), null, 2)], { type: "application/json" });

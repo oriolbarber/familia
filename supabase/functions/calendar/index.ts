@@ -182,7 +182,8 @@ Deno.serve(async (req) => {
         items.push(...(d.items ?? []));
         pagina = d.nextPageToken;
       } while (pagina && items.length < 1000);
-      return json({ esdeveniments: items.filter((e) => e.status !== "cancelled").map((e) => simplifica(e)) });
+      // versio: l'app la comprova abans de deixar editar (les versions antigues no saben editar)
+      return json({ versio: 2, esdeveniments: items.filter((e) => e.status !== "cancelled").map((e) => simplifica(e)) });
     }
 
     if (req.method === "POST") {

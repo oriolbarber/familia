@@ -59,6 +59,13 @@ function fonsDe(e, angle = "180deg") {
   const pas = 100 / cs.length;
   return `linear-gradient(${angle}, ${cs.map((c, i) => `${c} ${i * pas}% ${(i + 1) * pas}%`).join(", ")})`;
 }
+// Punt rodó amb el color de cada persona (sectors si n'hi ha diverses)
+function puntDe(e) {
+  const cs = pers(e).map(color);
+  if (cs.length <= 1) return cs[0] ?? "#6B6760";
+  const pas = 100 / cs.length;
+  return `conic-gradient(${cs.map((c, i) => `${c} ${i * pas}% ${(i + 1) * pas}%`).join(", ")})`;
+}
 const colorGoogleDe = (ps) => (ps.length === 1 ? membre(ps[0])?.google ?? null : null);
 const inicialsText = (e) => (pers(e).length ? pers(e).map((id) => membre(id)?.inicial ?? "·").join("") : "·");
 function inicialsDe(e, mida = "") {
@@ -349,7 +356,7 @@ function vistaDia(llista, des) {
   const delSeleccionat = delDia(llista, ag.dia);
   return h`${navSetmana(des, textSetmana(des))}
     <div class="dies">${dies.map((d, i) => h`<button data-accio="ag-dia" data-dia="${isoDia(d)}" aria-pressed="${mateixDia(d, ag.dia)}" class="${mateixDia(d, avui()) ? "avui" : ""}" aria-label="${fDiaLlarg.format(d)}">
-      ${DIES_CURTS[i]}<b>${d.getDate()}</b>${delDia(llista, d).length ? raw('<span class="punt"></span>') : raw('<span class="punt" style="opacity:0"></span>')}</button>`)}</div>
+      ${DIES_CURTS[i]}<b>${d.getDate()}</b><span class="punts-dia">${delDia(llista, d).slice(0, 3).map((e) => h`<i style="background:${puntDe(e)}"></i>`)}</span></button>`)}</div>
     <div class="seccio"><span class="etiqueta-seccio" style="margin-top:0">${mateixDia(ag.dia, avui()) ? "Avui · " : ""}${majuscula(fDiaLlarg.format(ag.dia))}</span>
       ${delSeleccionat.length ? delSeleccionat.map((e) => elemEsdev(e, ag.dia)) : h`<p class="buit">Res previst.</p>`}
     </div>`;
@@ -414,7 +421,7 @@ function vistaMes(llista) {
       const evs = delDia(llista, d);
       return h`<button data-accio="mes-dia" data-dia="${isoDia(d)}" class="${d.getMonth() !== primer.getMonth() ? "fora" : ""} ${mateixDia(d, avui()) ? "avui" : ""}" aria-label="${fDiaLlarg.format(d)}, ${plural(evs.length, "cosa", "coses")}">
         <b>${d.getDate()}</b>
-        <span class="punts">${evs.slice(0, 4).map((e) => h`<i style="background:${colorDe(e)}">${inicialsText(e)[0]}</i>`)}</span>
+        <span class="punts">${evs.slice(0, 4).map((e) => h`<i style="background:${puntDe(e)}">${inicialsText(e).slice(0, 2)}</i>`)}</span>
         ${evs.length > 4 ? h`<span class="mes-n">+${evs.length - 4}</span>` : ""}
       </button>`;
     })}</div>
@@ -440,7 +447,8 @@ function obreDetall(id) {
       ${e.nota ? h`<dt>Nota</dt><dd>${e.nota}</dd>` : ""}
     </dl>
     ${pendent && esAdult() ? h`<a class="boto primari ample" href="#permis/${e.id}" data-accio="tanca-full">Revisa el permís</a>` : ""}
-    ${potEsborrar ? h`<a class="boto ample" href="#edita/${e.id}" data-accio="tanca-full">Edita${e.serie ? " (es repeteix)" : ""}</a>
+    ${potEsborrar && Agenda.versio !== 2 ? h`<p class="avis-caixa">${I.alerta}<span>Per editar cal actualitzar la funció «calendar» a Supabase (guia, pas 6).</span></p>` : ""}
+    ${potEsborrar ? h`${Agenda.versio === 2 ? h`<a class="boto ample" href="#edita/${e.id}" data-accio="tanca-full">Edita${e.serie ? " (es repeteix)" : ""}</a>` : ""}
       <button class="boto perill ample" data-accio="esborra-esdev" data-id="${e.id}">Esborra</button>` : ""}
     <button class="boto ample" data-accio="tanca-full">Tanca</button>`);
 }

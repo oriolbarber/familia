@@ -116,6 +116,8 @@
   // =============================================================
   const Agenda = {
     // Retorna { llista, desada: bool, error } per a l'interval [des, fins)
+    versio: MODE_PROVA ? 2 : null, // versió de la funció «calendar» (2 = sap editar)
+
     async interval(des, fins) {
       const clau = `agenda:${isoDia(des)}:${isoDia(fins)}`;
       if (MODE_PROVA) {
@@ -127,6 +129,7 @@
       }
       try {
         const d = await crida("calendar", { query: `?des=${des.toISOString()}&fins=${fins.toISOString()}` });
+        Agenda.versio = d.versio ?? 1;
         local.escriu(clau, { llista: d.esdeveniments, quan: Date.now() });
         return { llista: d.esdeveniments.map(persones), desada: false };
       } catch (e) {
@@ -159,7 +162,9 @@
         local.escriu("prova:esdeveniments", tots);
         return;
       }
+      if (Agenda.versio !== 2) throw new Error("Cal actualitzar la funció «calendar» a Supabase abans de poder editar.");
       const d = await crida("calendar", { metode: "PATCH", query: `?id=${encodeURIComponent(serie || id)}`, cos: { canvis, serie: !!serie } });
+      if (!Array.isArray(d.esdeveniment?.persones)) throw new Error("La funció «calendar» no ha desat les persones: cal actualitzar-la a Supabase.");
       return d.esdeveniment;
     },
 

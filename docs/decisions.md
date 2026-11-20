@@ -46,6 +46,8 @@ Format: data · decisió · motiu · estat (vigent / pendent de confirmar / subs
 | 2026-11-20 | Camp «Per a qui» amb una o més persones (cap = tothom) en crear i **editar** esdeveniments; s'edita des del detall. En les repeticions es pot aplicar a tota la sèrie (sense tocar les dates) | Assignar bé les cites que el títol no diu de qui són | Vigent |
 | 2026-11-20 | Colors: franja de color de la persona a la vista Dia (franges si n'hi ha diverses) i blocs combinats a Setmana. En desar des de l'app, la cita pren a Google Calendar el color de la persona (`google` a `config.js`); si és de diverses persones o de tothom, el del calendari | Veure d'un cop d'ull de qui és cada cita, també a Google | Vigent |
 | 2026-11-20 | Les persones triades a l'app (també «tothom») tenen prioritat sobre les deduïdes pel títol | L'assignació manual mana | Vigent |
+| 2026-11-20 | Els punts de la tira de dies i del mes mostren els colors de totes les persones de la cita (sectors) | Comentari de l'Oriol | Vigent |
+| 2026-11-20 | La funció `calendar` informa de la seva versió (`versio: 2`); amb una funció antiga l'app no deixa editar i avisa | Evitar que una funció antiga interpreti una edició com un permís (afegiria «[Pendent]» al títol) | Vigent |
 
 ## Per què el compte de servei (xat 01)
 

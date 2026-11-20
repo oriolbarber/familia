@@ -164,6 +164,8 @@ h2 .punt-avis { top: -4px; right: -8px; }
 .inicial.gran { width: 48px; height: 48px; font-size: 1.1rem; }
 .inicial.petita { width: 28px; height: 28px; font-size: .75rem; }
 .inicial.tothom { background: var(--suau); }
+.inicials { display: inline-flex; flex: none; }
+.inicials .inicial + .inicial { margin-left: -12px; box-shadow: 0 0 0 2px var(--sup); }
 .xips { display: flex; gap: 8px; flex-wrap: wrap; }
 .xip {
   min-height: 44px; padding: 0 14px; border-radius: 22px; border: 1px solid var(--vora); background: var(--sup);

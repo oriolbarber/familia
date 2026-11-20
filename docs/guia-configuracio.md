@@ -17,9 +17,9 @@ Fem servir el calendari compartit que ja teniu, **GLOB**. No cal crear-ne cap de
 
 1. A [calendar.google.com](https://calendar.google.com), a la llista de l'esquerra, passa per sobre de **GLOB** → ⋮ → **Configuració i ús compartit**.
 2. Baixa fins a **Integra el calendari → ID del calendari** (acaba en `@group.calendar.google.com`). Copia'l: és `GOOGLE_CALENDAR_ID`.
-3. Apunta el correu de Google de cada membre: serviran per al secret `MEMBRES_CORREUS` (pas 5), perquè l'app sàpiga de qui és cada esdeveniment creat directament a Google.
+3. Perquè l'app sàpiga de qui és cada esdeveniment, posa el nom al títol, com ja feu: «Gael | …», «Bruna dentista», «LAU | fisio», «PILATES URILAU». Si no hi ha cap nom, és de tota la família.
 
-> L'app veurà **tots** els esdeveniments de GLOB. Els que es creen des de l'app porten la persona a dins; els creats a Google es reconeixen pel correu de qui els ha creat. Si no se sap de qui és, surt com a "Tothom".
+> L'app veurà **tots** els esdeveniments de GLOB. Els que es creen des de l'app porten la persona a dins; els creats a Google es reconeixen pel nom del títol (també «Lau», «Uri» i «URILAU»; es configura a `MEMBRES` i `GRUPS` de `app/config.js`).
 
 ## 2 · Compte de servei (Google Cloud)
 
@@ -57,7 +57,6 @@ Fes-ho només una vegada.
 |---|---|
 | `GOOGLE_SA_JSON` | Tot el contingut del fitxer JSON del pas 2.4 (obre'l amb un editor de text i copia-ho tot) |
 | `GOOGLE_CALENDAR_ID` | L'ID de GLOB (pas 1.2) |
-| `MEMBRES_CORREUS` | `{"correu-oriol@gmail.com":"oriol","correu-laura@gmail.com":"laura","correu-bruna@gmail.com":"bruna","correu-gael@gmail.com":"gael"}` amb els correus reals. Els `id` han de ser exactament aquests (els de `app/config.js`) |
 | `FAMILIA_CODI` | Una contrasenya que inventes (mínim 12 caràcters). És la que escriurà cada membre la primera vegada |
 | `VAPID_KEYS` | El JSON del pas 4 |
 | `VAPID_CONTACT` | `mailto:` + el teu correu |
@@ -66,7 +65,7 @@ Fes-ho només una vegada.
 
 **Edge Functions → Deploy a new function → Via Editor**, dues vegades:
 
-1. Nom `calendar`: enganxa `supabase/functions/calendar/index.ts` → **Deploy**. Si la vas pujar abans del 8 de novembre, torna-la a pujar: la versió nova gestiona permisos, esdeveniments de tot el dia i `MEMBRES_CORREUS`.
+1. Nom `calendar`: enganxa `supabase/functions/calendar/index.ts` → **Deploy**. Si la vas pujar abans del 20 de novembre, torna-la a pujar.
 2. Nom `push-prova`: enganxa `supabase/functions/push-prova/index.ts` → **Deploy**.
 
 A cada funció, a **Details**, **desactiva "Enforce JWT verification"** (verify JWT). La protecció és el codi familiar fins que la Fase A afegeixi l'inici de sessió.

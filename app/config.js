@@ -13,9 +13,14 @@ window.CONFIG = {
   // Membres: id estable, nom, rol (adult/jove), color i inicial (per a daltònics).
   // Els correus NO van aquí (repositori públic): van al secret MEMBRES_CORREUS de Supabase.
   MEMBRES: [
-    { id: "oriol", nom: "Oriol", rol: "adult", color: "#1F5FBF", inicial: "O" },
-    { id: "laura", nom: "Laura", rol: "adult", color: "#B4480F", inicial: "L" },
+    { id: "oriol", nom: "Oriol", rol: "adult", color: "#1F5FBF", inicial: "O", alies: ["uri"] },
+    { id: "laura", nom: "Laura", rol: "adult", color: "#B4480F", inicial: "L", alies: ["lau"] },
     { id: "bruna", nom: "Bruna", rol: "jove", color: "#0E7C73", inicial: "B" },
     { id: "gael", nom: "Gael", rol: "jove", color: "#7A3FB8", inicial: "G" },
   ],
+
+  // Paraules del títol d'un esdeveniment que corresponen a més d'una persona.
+  // (De qui és cada esdeveniment de Google es dedueix del títol: «Gael | …», «Bruna dentista», «LAU | fisio»…
+  //  Si no hi ha cap nom, és de tota la família.)
+  GRUPS: { urilau: ["oriol", "laura"] },
 };

@@ -48,6 +48,17 @@ const esAdult = (id = jo) => membre(id)?.rol === "adult";
 const nom = (id) => membre(id)?.nom ?? "Tothom";
 const color = (id) => membre(id)?.color ?? "#6B6760";
 
+// Persones d'un esdeveniment (llista buida = tota la família)
+const pers = (e) => e.persones ?? (e.persona ? [e.persona] : []);
+const nomsDe = (e) => (pers(e).length ? pers(e).map(nom).join(" i ") : "Tothom");
+const colorDe = (e) => color(pers(e)[0]);
+const inicialsText = (e) => (pers(e).length ? pers(e).map((id) => membre(id)?.inicial ?? "·").join("") : "·");
+function inicialsDe(e, mida = "") {
+  const ps = pers(e);
+  if (ps.length <= 1) return inicial(ps[0] ?? null, mida);
+  return h`<span class="inicials" aria-label="${nomsDe(e)}">${ps.map((id) => inicial(id, mida))}</span>`;
+}
+
 function inicial(id, mida = "") {
   const m = membre(id);
   if (!m) return h`<span class="inicial tothom ${mida}" title="Tothom" aria-label="Tothom">${I.familia}</span>`;
@@ -206,9 +217,9 @@ async function pantInici() {
   const toca = [];
   const pendents = llista.filter((e) => e.permis?.estat === "pendent");
   if (esAdult()) {
-    for (const e of pendents) toca.push(h`<a class="element avis" href="#permis/${e.id}">${I.rellotge}<span class="cos"><b>Permís: ${e.titol}</b><span>${nom(e.persona)} · ${quanText(e)}</span></span>${I.seg}</a>`);
+    for (const e of pendents) toca.push(h`<a class="element avis" href="#permis/${e.id}">${I.rellotge}<span class="cos"><b>Permís: ${e.titol}</b><span>${nomsDe(e)} · ${quanText(e)}</span></span>${I.seg}</a>`);
   } else {
-    for (const e of pendents.filter((x) => x.persona === jo)) toca.push(h`<button class="element" data-accio="detall" data-id="${e.id}">${I.rellotge}<span class="cos"><b>Esperant permís</b><span>${e.titol}</span></span>${I.seg}</button>`);
+    for (const e of pendents.filter((x) => pers(x).includes(jo))) toca.push(h`<button class="element" data-accio="detall" data-id="${e.id}">${I.rellotge}<span class="cos"><b>Esperant permís</b><span>${e.titol}</span></span>${I.seg}</button>`);
   }
   const ts = tasquesInfo();
   for (const t of propostesMeves(ts).perMi) {
@@ -232,8 +243,8 @@ async function pantInici() {
     ? h`<section class="ara">
         <span class="rotul">${primer.totElDia ? "AVUI" : new Date(primer.inici) <= ara ? "ARA" : "ARA VE"}</span>
         <button data-accio="detall" data-id="${primer.id}" class="gran" style="all:unset;cursor:pointer;font-size:1.65rem;font-weight:700;line-height:1.15">${primer.titol}</button>
-        <div class="fila">${inicial(primer.persona, "petita")}<span>${nom(primer.persona)} · ${horaDe(primer)}${primer.totElDia ? "" : " · " + quanFalta(primer, ara)}</span></div>
-        ${resta.length ? h`<div class="resta">${resta.slice(0, 4).map((e) => h`<span>${horaDe(e)} · ${e.titol} (${nom(e.persona)})</span>`)}${resta.length > 4 ? h`<span>i ${resta.length - 4} més…</span>` : ""}</div>` : ""}
+        <div class="fila">${inicialsDe(primer, "petita")}<span>${nomsDe(primer)} · ${horaDe(primer)}${primer.totElDia ? "" : " · " + quanFalta(primer, ara)}</span></div>
+        ${resta.length ? h`<div class="resta">${resta.slice(0, 4).map((e) => h`<span>${horaDe(e)} · ${e.titol} (${nomsDe(e)})</span>`)}${resta.length > 4 ? h`<span>i ${resta.length - 4} més…</span>` : ""}</div>` : ""}
       </section>`
     : h`<section class="ara"><span class="rotul">AVUI</span><span class="gran">Res més previst</span><a href="#agenda" style="color:inherit;font-weight:700">Mira l'agenda</a></section>`;
 
@@ -259,8 +270,8 @@ const ag = { vista: pref("agenda-vista", "dia"), filtre: pref("agenda-filtre", "
 
 function aplica(e) {
   if (ag.filtre === "tothom") return true;
-  if (ag.filtre === "meu") return !e.persona || e.persona === jo;
-  return e.persona === ag.filtre;
+  if (ag.filtre === "meu") return !pers(e).length || pers(e).includes(jo);
+  return pers(e).includes(ag.filtre);
 }
 
 async function pantAgenda() {
@@ -319,7 +330,7 @@ const textSetmana = (des) => {
 function elemEsdev(e, dia) {
   const pendent = e.permis?.estat === "pendent";
   return h`<button class="element ${pendent ? "pendent" : ""}" data-accio="detall" data-id="${e.id}">
-    <span class="hora">${horaDe(e, dia)}</span>${inicial(e.persona)}
+    <span class="hora">${horaDe(e, dia)}</span>${inicialsDe(e)}
     <span class="cos"><b>${e.titol}</b>${pendent ? h`<span class="estat-pendent">${I.rellotge}Pendent de permís</span>` : e.lloc ? h`<span>${e.lloc}</span>` : ""}</span>
   </button>`;
 }
@@ -356,15 +367,15 @@ function vistaSetmana(llista, des) {
       const alt = Math.max(ALT * 0.6, ((fi - ini) / 36e5) * ALT - 2);
       const pend = e.permis?.estat === "pendent";
       return h`<button class="bloc ${pend ? "pendent" : ""}" data-accio="detall" data-id="${e.id}"
-        style="top:${top}px;height:${alt}px;left:calc(${(c / n) * 100}% + 1px);width:calc(${100 / n}% - 2px);background:${color(e.persona)}"
-        aria-label="${e.titol}, ${horaDe(e, d)}, ${nom(e.persona)}"><span class="ini">${membre(e.persona)?.inicial ?? "·"}</span> ${e.titol}</button>`;
+        style="top:${top}px;height:${alt}px;left:calc(${(c / n) * 100}% + 1px);width:calc(${100 / n}% - 2px);background:${colorDe(e)}"
+        aria-label="${e.titol}, ${horaDe(e, d)}, ${nomsDe(e)}"><span class="ini">${inicialsText(e)}</span> ${e.titol}</button>`;
     });
   };
   const hores = Array.from({ length: HORA_FI - HORA_INI }, (_, i) => HORA_INI + i);
   const cos = h`${navSetmana(des, textSetmana(des))}
     <div class="horari" id="horari" style="--h:${ALT}px;margin-top:8px">
       <div class="horari-cap"><span></span>${dies.map((d, i) => h`<span class="${mateixDia(d, avui()) ? "avui" : ""}">${DIES_CURTS[i]}<b>${d.getDate()}</b></span>`)}</div>
-      <div class="horari-tot"><span></span>${dies.map((d) => h`<div>${totElDia(d).map((e) => h`<button class="bloc-tot" data-accio="detall" data-id="${e.id}" style="background:${color(e.persona)}"><span class="ini">${membre(e.persona)?.inicial ?? "·"}</span> ${e.titol}</button>`)}</div>`)}</div>
+      <div class="horari-tot"><span></span>${dies.map((d) => h`<div>${totElDia(d).map((e) => h`<button class="bloc-tot" data-accio="detall" data-id="${e.id}" style="background:${colorDe(e)}"><span class="ini">${inicialsText(e)}</span> ${e.titol}</button>`)}</div>`)}</div>
       <div class="horari-cos">
         <div class="horari-hores">${hores.map((x) => h`<span>${x}</span>`)}</div>
         ${dies.map((d) => h`<div class="horari-col" style="height:${hores.length * ALT}px">${blocs(d)}</div>`)}
@@ -394,7 +405,7 @@ function vistaMes(llista) {
       const evs = delDia(llista, d);
       return h`<button data-accio="mes-dia" data-dia="${isoDia(d)}" class="${d.getMonth() !== primer.getMonth() ? "fora" : ""} ${mateixDia(d, avui()) ? "avui" : ""}" aria-label="${fDiaLlarg.format(d)}, ${plural(evs.length, "cosa", "coses")}">
         <b>${d.getDate()}</b>
-        <span class="punts">${evs.slice(0, 4).map((e) => h`<i style="background:${color(e.persona)}">${membre(e.persona)?.inicial ?? "·"}</i>`)}</span>
+        <span class="punts">${evs.slice(0, 4).map((e) => h`<i style="background:${colorDe(e)}">${inicialsText(e)[0]}</i>`)}</span>
         ${evs.length > 4 ? h`<span class="mes-n">+${evs.length - 4}</span>` : ""}
       </button>`;
     })}</div>
@@ -410,9 +421,9 @@ function obreDetall(id) {
   const e = vistos.get(id);
   if (!e) return;
   const pendent = e.permis?.estat === "pendent";
-  const potEsborrar = esAdult() || !e.persona || e.persona === jo;
+  const potEsborrar = esAdult() || !pers(e).length || pers(e).includes(jo);
   obreFull(h`
-    <div class="fila">${inicial(e.persona, "gran")}<div class="cos" style="display:flex;flex-direction:column"><span style="color:var(--suau)">${nom(e.persona)}</span><b style="font-size:1.3rem;line-height:1.2">${e.titol}</b></div></div>
+    <div class="fila">${inicialsDe(e, "gran")}<div class="cos" style="display:flex;flex-direction:column"><span style="color:var(--suau)">${nomsDe(e)}</span><b style="font-size:1.3rem;line-height:1.2">${e.titol}</b></div></div>
     <dl class="diagnostic">
       <dt>Quan</dt><dd>${quanText(e)}</dd>
       ${e.lloc ? h`<dt>On</dt><dd>${e.lloc}</dd>` : ""}
@@ -547,7 +558,7 @@ async function pantPermis(id) {
     sub: true, pare: "inici", titol: "Permís",
     cos: h`<div class="formulari">
       <section class="targeta">
-        <div class="fila">${inicial(e.persona, "gran")}<div style="display:flex;flex-direction:column"><span style="color:var(--suau)">${nom(e.persona)} demana</span><b style="font-size:1.3rem;line-height:1.2">${e.titol}</b></div></div>
+        <div class="fila">${inicialsDe(e, "gran")}<div style="display:flex;flex-direction:column"><span style="color:var(--suau)">${nomsDe(e)} demana</span><b style="font-size:1.3rem;line-height:1.2">${e.titol}</b></div></div>
         <dl class="diagnostic">
           <dt>Tipus</dt><dd>${PERMISOS[e.permis?.tipus] ?? "—"}${e.permis?.import ? ` · ${euros(e.permis.import)}` : ""}</dd>
           <dt>Quan</dt><dd>${quanText(e)}</dd>

@@ -122,17 +122,17 @@
         llavor();
         const tots = local.llegeix("prova:esdeveniments", []);
         const llista = tots.filter((e) => new Date(fiReal(e)) > des && new Date(iniReal(e)) < fins)
-          .sort((x, y) => new Date(iniReal(x)) - new Date(iniReal(y)));
+          .sort((x, y) => new Date(iniReal(x)) - new Date(iniReal(y))).map(persones);
         return { llista, desada: false };
       }
       try {
         const d = await crida("calendar", { query: `?des=${des.toISOString()}&fins=${fins.toISOString()}` });
         local.escriu(clau, { llista: d.esdeveniments, quan: Date.now() });
-        return { llista: d.esdeveniments, desada: false };
+        return { llista: d.esdeveniments.map(persones), desada: false };
       } catch (e) {
         const desat = local.llegeix(clau);
         if (e.codi === 401) throw e;
-        return { llista: desat?.llista ?? [], desada: !!desat, quan: desat?.quan, error: e.message };
+        return { llista: (desat?.llista ?? []).map(persones), desada: !!desat, quan: desat?.quan, error: e.message };
       }
     },
 
@@ -168,6 +168,22 @@
       await crida("calendar", { metode: "DELETE", query: `?id=${encodeURIComponent(id)}` });
     },
   };
+
+  // De qui és un esdeveniment: la persona desada per l'app i, si no n'hi ha, els noms del títol
+  // (nom, àlies o grup de config.js). Sense cap nom → tota la família (persones = []).
+  const normalitza = (t) => String(t ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  function persones(e) {
+    if (e.persona) return { ...e, persones: [e.persona] };
+    const trobades = new Set();
+    for (const paraula of normalitza(e.titol).split(/[^a-z0-9]+/).filter(Boolean)) {
+      for (const id of C.GRUPS?.[paraula] ?? []) trobades.add(id);
+      for (const m of C.MEMBRES) {
+        if ([m.id, normalitza(m.nom), ...(m.alies ?? [])].includes(paraula)) trobades.add(m.id);
+      }
+    }
+    const llista = C.MEMBRES.map((m) => m.id).filter((id) => trobades.has(id));
+    return { ...e, persona: llista.length === 1 ? llista[0] : null, persones: llista };
+  }
 
   // Les dates «tot el dia» són 'AAAA-MM-DD' (fi exclosa, com a Google).
   function iniReal(e) { return e.totElDia ? e.inici + "T00:00" : e.inici; }
@@ -245,5 +261,5 @@
     local.esborra("prova:llavor");
   }
 
-  window.Dades = { MODE_PROVA, local, crida, Agenda, Col, Assistent, isoDia, iniReal, fiReal, DIA };
+  window.Dades = { MODE_PROVA, local, crida, Agenda, Col, Assistent, persones, isoDia, iniReal, fiReal, DIA };
 })();

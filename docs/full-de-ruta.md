@@ -29,7 +29,8 @@ Cada etapa és **un xat** (prompt a `docs/xats/`). No es comença la següent fi
 - [x] Mode prova amb dades d'exemple; mode connectat amb GLOB via `calendar`
 - [x] Noms reals de la família a `config.js` (Oriol, Laura, Bruna, Gael)
 - [x] `config.js` apunta al Supabase real (`rxuchoduwgxatnxqjysf`)
-- [ ] Provar el mode connectat amb GLOB als mòbils (cal la funció `calendar` actualitzada i el secret `MEMBRES_CORREUS`)
+- [ ] Provar el mode connectat amb GLOB als mòbils (cal la funció `calendar` actualitzada)
+- [x] De qui és cada esdeveniment de GLOB: pel nom al títol (revisat amb els esdeveniments reals fins al gener)
 - [ ] Confirmar el llindar de cost (ara 20 €)
 
 ## 2 · Model de dades — `xats/02-model-de-dades.md`

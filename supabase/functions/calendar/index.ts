@@ -6,8 +6,7 @@
 // Secrets necessaris (Supabase › Edge Functions › Secrets):
 //   GOOGLE_SA_JSON      contingut sencer del fitxer JSON de la clau
 //   GOOGLE_CALENDAR_ID  id del calendari compartit de la família («GLOB»)
-//   MEMBRES_CORREUS     (opcional) {"correu@gmail.com":"id-membre", …} per saber de qui és
-//                       un esdeveniment creat directament a Google Calendar
+//   (De qui és un esdeveniment creat a Google ho dedueix l'app pel títol: vegeu GRUPS i alies a config.js.)
 //   FAMILIA_CODI        codi compartit que la PWA envia a la capçalera x-familia-codi
 //
 // Rutes:
@@ -110,14 +109,8 @@ async function google(cami: string, opcions: RequestInit = {}): Promise<Response
 
 const PREFIX = "[Pendent] ";
 
-// Correu de Google → id de membre (secret MEMBRES_CORREUS, p. ex. {"nom@gmail.com":"oriol"}).
-// Serveix per saber de qui és un esdeveniment creat fora de l'app (directament a Google Calendar).
-function correus(): Record<string, string> {
-  try { return JSON.parse(Deno.env.get("MEMBRES_CORREUS") ?? "{}"); } catch { return {}; }
-}
-
 // deno-lint-ignore no-explicit-any
-function simplifica(e: any, mapa = correus()) {
+function simplifica(e: any) {
   const p = e.extendedProperties?.private ?? {};
   const titol = (e.summary ?? "(sense títol)").replace(PREFIX, "");
   return {
@@ -128,7 +121,7 @@ function simplifica(e: any, mapa = correus()) {
     totElDia: !e.start?.dateTime,
     lloc: e.location ?? null,
     nota: p.nota || null,
-    persona: p.persona || mapa[e.creator?.email ?? ""] || null,
+    persona: p.persona || null, // només la que ha desat l'app; la resta la dedueix l'app pel títol
     permis: p.permis_tipus
       ? {
         tipus: p.permis_tipus,
@@ -163,7 +156,6 @@ Deno.serve(async (req) => {
     if (req.method === "GET") {
       const des = url.searchParams.get("des") ?? new Date().toISOString();
       const fins = url.searchParams.get("fins") ?? new Date(Date.now() + 7 * 864e5).toISOString();
-      const mapa = correus();
       const items = [];
       let pagina: string | undefined;
       do {
@@ -177,7 +169,7 @@ Deno.serve(async (req) => {
         items.push(...(d.items ?? []));
         pagina = d.nextPageToken;
       } while (pagina && items.length < 1000);
-      return json({ esdeveniments: items.filter((e) => e.status !== "cancelled").map((e) => simplifica(e, mapa)) });
+      return json({ esdeveniments: items.filter((e) => e.status !== "cancelled").map((e) => simplifica(e)) });
     }
 
     if (req.method === "POST") {

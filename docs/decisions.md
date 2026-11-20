@@ -22,7 +22,7 @@ Format: data · decisió · motiu · estat (vigent / pendent de confirmar / subs
 | 2026-11-08 | «Ara no» en un permís treu l'esdeveniment del calendari amb confirmació lliscant | És destructiu | Vigent |
 | 2026-11-08 | Llindar de cost per demanar permís: 20 € (configurable a `config.js`) | Valor provisional, pendent de confirmar | Provisional |
 | 2026-11-08 | L'estat del permís es desa a l'esdeveniment de Google (propietats privades + «[Pendent]» al títol) | Funciona sense Supabase; el registre complet anirà a Supabase | Vigent |
-| 2026-11-08 | De qui és un esdeveniment creat a Google: pel correu del creador (secret `MEMBRES_CORREUS`) | Els correus no poden anar al repositori públic | Vigent |
+| 2026-11-08 | De qui és un esdeveniment creat a Google: pel correu del creador (secret `MEMBRES_CORREUS`) | Els correus no poden anar al repositori públic | Substituïda (20/11) |
 | 2026-11-08 | **Mode prova**: sense Supabase configurat, l'app funciona amb dades d'exemple | Es pot provar i ensenyar a la família abans de configurar res | Vigent |
 | 2026-11-08 | Tasques, compra, desitjos, préstecs i historial de permisos es desen **de moment en cada mòbil**; es compartiran amb Supabase (xat 02) | Primer muntatge usable sense esperar el backend | Provisional |
 | 2026-11-08 | Lletra Atkinson Hyperlegible inclosa a l'app (sense dependències externes) | Llegibilitat i funcionament sense connexió | Vigent |
@@ -42,6 +42,7 @@ Format: data · decisió · motiu · estat (vigent / pendent de confirmar / subs
 | 2026-11-20 | Context de la família en el secret `ASSISTENT_CONTEXT`, no al repositori | Conté informació personal i el repositori és públic | Vigent |
 | 2026-11-20 | Aprenentatge de l'assistent: cada proposta acceptada, editada (amb el resultat final) o descartada es desa a `assistent_decisions`. Cada 1–2 mesos s'exporta des de l'app i es revisa en un xat (`docs/xats/08`) per actualitzar `ASSISTENT_CONTEXT` | Millorar el context amb l'ús real, sense entrenar res ni guardar fotos | Vigent |
 | 2026-11-20 | Les propostes tenen botó «Descarta» i la llista de la compra proposada es pot corregir abans d'afegir-la | Saber què no interessa i quines correccions es fan | Vigent |
+| 2026-11-20 | De qui és un esdeveniment creat a Google: **pel nom al títol** («Gael | …», «LAU | …», «URILAU»), amb àlies i grups a `config.js`; sense nom → tothom. Un esdeveniment pot ser de diverses persones | La Laura crea gairebé tots els esdeveniments (també els dels fills) i des de dos correus: el creador no indica de qui és | Vigent |
 
 ## Per què el compte de servei (xat 01)
 

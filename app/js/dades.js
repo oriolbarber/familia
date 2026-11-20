@@ -148,6 +148,21 @@
       return d.esdeveniment;
     },
 
+    // canvis: {titol, inici, fi, totElDia, persones, colorGoogle, lloc, nota}. serie: id de la sèrie per editar-la sencera.
+    async edita(id, canvis, serie = null) {
+      if (MODE_PROVA) {
+        const tots = local.llegeix("prova:esdeveniments", []);
+        for (const x of tots.filter((x) => x.id === id || (serie && x.serie === serie))) {
+          const { colorGoogle, ...resta } = canvis;
+          Object.assign(x, serie ? { titol: resta.titol, persones: resta.persones, persona: null, lloc: resta.lloc, nota: resta.nota } : { ...resta, persona: null });
+        }
+        local.escriu("prova:esdeveniments", tots);
+        return;
+      }
+      const d = await crida("calendar", { metode: "PATCH", query: `?id=${encodeURIComponent(serie || id)}`, cos: { canvis, serie: !!serie } });
+      return d.esdeveniment;
+    },
+
     async decideixPermis(id, { estat, qui, comentari }) {
       if (MODE_PROVA) {
         const tots = local.llegeix("prova:esdeveniments", []);
@@ -173,7 +188,9 @@
   // (nom, àlies o grup de config.js). Sense cap nom → tota la família (persones = []).
   const normalitza = (t) => String(t ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   function persones(e) {
-    if (e.persona) return { ...e, persones: [e.persona] };
+    const valids = (l) => l.filter((id) => C.MEMBRES.some((m) => m.id === id));
+    if (Array.isArray(e.persones)) { const l = valids(e.persones); return { ...e, persona: l.length === 1 ? l[0] : null, persones: l }; }
+    if (e.persona) return { ...e, persones: valids([e.persona]) };
     const trobades = new Set();
     for (const paraula of normalitza(e.titol).split(/[^a-z0-9]+/).filter(Boolean)) {
       for (const id of C.GRUPS?.[paraula] ?? []) trobades.add(id);
@@ -182,7 +199,7 @@
       }
     }
     const llista = C.MEMBRES.map((m) => m.id).filter((id) => trobades.has(id));
-    return { ...e, persona: llista.length === 1 ? llista[0] : null, persones: llista };
+    return { ...e, persona: llista.length === 1 ? llista[0] : null, persones: llista, personesDeduides: true };
   }
 
   // Les dates «tot el dia» són 'AAAA-MM-DD' (fi exclosa, com a Google).

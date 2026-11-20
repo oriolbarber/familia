@@ -52,6 +52,14 @@ const color = (id) => membre(id)?.color ?? "#6B6760";
 const pers = (e) => e.persones ?? (e.persona ? [e.persona] : []);
 const nomsDe = (e) => (pers(e).length ? pers(e).map(nom).join(" i ") : "Tothom");
 const colorDe = (e) => color(pers(e)[0]);
+// Fons amb el color de cada persona (franges si n'hi ha diverses)
+function fonsDe(e, angle = "180deg") {
+  const cs = pers(e).map(color);
+  if (cs.length <= 1) return cs[0] ?? "#6B6760";
+  const pas = 100 / cs.length;
+  return `linear-gradient(${angle}, ${cs.map((c, i) => `${c} ${i * pas}% ${(i + 1) * pas}%`).join(", ")})`;
+}
+const colorGoogleDe = (ps) => (ps.length === 1 ? membre(ps[0])?.google ?? null : null);
 const inicialsText = (e) => (pers(e).length ? pers(e).map((id) => membre(id)?.inicial ?? "·").join("") : "·");
 function inicialsDe(e, mida = "") {
   const ps = pers(e);
@@ -329,7 +337,8 @@ const textSetmana = (des) => {
 
 function elemEsdev(e, dia) {
   const pendent = e.permis?.estat === "pendent";
-  return h`<button class="element ${pendent ? "pendent" : ""}" data-accio="detall" data-id="${e.id}">
+  return h`<button class="element amb-franja ${pendent ? "pendent" : ""}" data-accio="detall" data-id="${e.id}">
+    <span class="franja-persona" style="background:${pers(e).length ? fonsDe(e) : "var(--vora)"}" aria-hidden="true"></span>
     <span class="hora">${horaDe(e, dia)}</span>${inicialsDe(e)}
     <span class="cos"><b>${e.titol}</b>${pendent ? h`<span class="estat-pendent">${I.rellotge}Pendent de permís</span>` : e.lloc ? h`<span>${e.lloc}</span>` : ""}</span>
   </button>`;
@@ -367,7 +376,7 @@ function vistaSetmana(llista, des) {
       const alt = Math.max(ALT * 0.6, ((fi - ini) / 36e5) * ALT - 2);
       const pend = e.permis?.estat === "pendent";
       return h`<button class="bloc ${pend ? "pendent" : ""}" data-accio="detall" data-id="${e.id}"
-        style="top:${top}px;height:${alt}px;left:calc(${(c / n) * 100}% + 1px);width:calc(${100 / n}% - 2px);background:${colorDe(e)}"
+        style="top:${top}px;height:${alt}px;left:calc(${(c / n) * 100}% + 1px);width:calc(${100 / n}% - 2px);background:${fonsDe(e, "135deg")}"
         aria-label="${e.titol}, ${horaDe(e, d)}, ${nomsDe(e)}"><span class="ini">${inicialsText(e)}</span> ${e.titol}</button>`;
     });
   };
@@ -375,7 +384,7 @@ function vistaSetmana(llista, des) {
   const cos = h`${navSetmana(des, textSetmana(des))}
     <div class="horari" id="horari" style="--h:${ALT}px;margin-top:8px">
       <div class="horari-cap"><span></span>${dies.map((d, i) => h`<span class="${mateixDia(d, avui()) ? "avui" : ""}">${DIES_CURTS[i]}<b>${d.getDate()}</b></span>`)}</div>
-      <div class="horari-tot"><span></span>${dies.map((d) => h`<div>${totElDia(d).map((e) => h`<button class="bloc-tot" data-accio="detall" data-id="${e.id}" style="background:${colorDe(e)}"><span class="ini">${inicialsText(e)}</span> ${e.titol}</button>`)}</div>`)}</div>
+      <div class="horari-tot"><span></span>${dies.map((d) => h`<div>${totElDia(d).map((e) => h`<button class="bloc-tot" data-accio="detall" data-id="${e.id}" style="background:${fonsDe(e, "90deg")}"><span class="ini">${inicialsText(e)}</span> ${e.titol}</button>`)}</div>`)}</div>
       <div class="horari-cos">
         <div class="horari-hores">${hores.map((x) => h`<span>${x}</span>`)}</div>
         ${dies.map((d) => h`<div class="horari-col" style="height:${hores.length * ALT}px">${blocs(d)}</div>`)}
@@ -423,7 +432,7 @@ function obreDetall(id) {
   const pendent = e.permis?.estat === "pendent";
   const potEsborrar = esAdult() || !pers(e).length || pers(e).includes(jo);
   obreFull(h`
-    <div class="fila">${inicialsDe(e, "gran")}<div class="cos" style="display:flex;flex-direction:column"><span style="color:var(--suau)">${nomsDe(e)}</span><b style="font-size:1.3rem;line-height:1.2">${e.titol}</b></div></div>
+    <div class="fila">${inicialsDe(e, "gran")}<div class="cos" style="display:flex;flex-direction:column"><span style="color:var(--suau)">${nomsDe(e)}${e.personesDeduides ? " · pel títol" : ""}</span><b style="font-size:1.3rem;line-height:1.2">${e.titol}</b></div></div>
     <dl class="diagnostic">
       <dt>Quan</dt><dd>${quanText(e)}</dd>
       ${e.lloc ? h`<dt>On</dt><dd>${e.lloc}</dd>` : ""}
@@ -431,25 +440,39 @@ function obreDetall(id) {
       ${e.nota ? h`<dt>Nota</dt><dd>${e.nota}</dd>` : ""}
     </dl>
     ${pendent && esAdult() ? h`<a class="boto primari ample" href="#permis/${e.id}" data-accio="tanca-full">Revisa el permís</a>` : ""}
-    ${potEsborrar ? h`<button class="boto perill ample" data-accio="esborra-esdev" data-id="${e.id}">Esborra</button>` : ""}
+    ${potEsborrar ? h`<a class="boto ample" href="#edita/${e.id}" data-accio="tanca-full">Edita${e.serie ? " (es repeteix)" : ""}</a>
+      <button class="boto perill ample" data-accio="esborra-esdev" data-id="${e.id}">Esborra</button>` : ""}
     <button class="boto ample" data-accio="tanca-full">Tanca</button>`);
 }
 
-async function pantNou(dataIso) {
+let editant = null; // esdeveniment que s'està editant (null = nou)
+
+async function pantEdita(id) {
+  let e = vistos.get(id);
+  if (!e) { const r = await Agenda.interval(sumaDies(avui(), -60), sumaDies(avui(), 180)); recorda(r.llista); e = vistos.get(id); }
+  if (!e) return { sub: true, pare: "agenda", titol: "Edita", cos: h`<p class="buit" style="padding-top:20px">Aquest esdeveniment ja no existeix.</p>` };
+  editant = e;
+  return pantNou(null, e);
+}
+
+async function pantNou(dataIso, edicio = null) {
+  if (!edicio) editant = null;
   const dia = dataIso ? dataDe(dataIso) : ag.dia;
   const hora = new Date(); hora.setMinutes(0, 0, 0); hora.setHours(hora.getHours() + 1);
   const hIni = `${String(hora.getHours()).padStart(2, "0")}:00`;
   const hFi = `${String((hora.getHours() + 1) % 24).padStart(2, "0")}:00`;
   return {
-    sub: true, pare: "agenda", titol: "Nou esdeveniment",
+    sub: true, pare: "agenda", titol: edicio ? "Edita" : "Nou esdeveniment",
     cos: h`<form id="form-nou" class="formulari" autocomplete="off">
       <div class="camp"><label for="n-titol">Què</label><input id="n-titol" type="text" required maxlength="120" placeholder="Per exemple: Partit de bàsquet"></div>
-      <div class="camp"><span class="etiq">Qui</span>
-        <div class="fila" role="group" aria-label="Qui">
+      <div class="camp"><span class="etiq">Per a qui <span class="ajuda">(una o més persones; cap = tothom)</span></span>
+        <div class="fila" role="group" aria-label="Per a qui" style="flex-wrap:wrap">
           ${C.MEMBRES.map((m) => h`<button type="button" class="tria-persona" data-accio="nou-qui" data-id="${m.id}" aria-pressed="${m.id === jo}" aria-label="${m.nom}" style="background:${m.color}">${m.inicial}</button>`)}
           <button type="button" class="tria-persona" data-accio="nou-qui" data-id="" aria-pressed="false" aria-label="Tothom" style="background:#6B6760">${I.familia}</button>
         </div>
+        <span id="n-qui-text" style="color:var(--suau);font-size:.9rem"></span>
       </div>
+      ${edicio?.serie ? h`<label class="interruptor"><span class="cos" style="flex:1;display:flex;flex-direction:column"><b>Aplica a totes les repeticions</b><span style="color:var(--suau);font-size:.85rem">Canvia el títol, les persones, el lloc i la nota de tota la sèrie. Les dates no es toquen.</span></span><input id="n-serie" type="checkbox" checked></label>` : ""}
       <label class="interruptor"><span class="cos" style="flex:1"><b>Tot el dia</b></span><input id="n-totdia" type="checkbox"></label>
       <div class="graella2">
         <div class="camp"><label for="n-dini">Comença</label><input id="n-dini" type="date" required value="${isoDia(dia)}"></div>
@@ -471,18 +494,40 @@ async function pantNou(dataIso) {
     </form>`,
     despres: () => {
       $("#form-nou").onsubmit = desaNou; $("#n-totdia").onchange = actualitzaNou; $("#n-import").oninput = actualitzaNou;
-      if (nouOrigen) omplenaNou(asProposta?.esdeveniments[nouOrigen.index]);
+      if ($("#n-serie")) $("#n-serie").onchange = actualitzaNou;
+      if (edicio) omplenaEdicio(edicio);
+      else if (nouOrigen) omplenaNou(asProposta?.esdeveniments[nouOrigen.index]);
       actualitzaNou(); $("#n-titol").focus();
     },
   };
+}
+
+const marcaPersones = (ids) => {
+  for (const b of document.querySelectorAll("[data-accio=nou-qui]")) b.setAttribute("aria-pressed", String(b.dataset.id ? ids.includes(b.dataset.id) : !ids.length));
+};
+const horaLocal = (iso) => { const d = new Date(iso); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
+
+// Omple el formulari amb un esdeveniment existent
+function omplenaEdicio(e) {
+  $("#n-titol").value = e.titol || "";
+  marcaPersones(pers(e));
+  $("#n-totdia").checked = !!e.totElDia;
+  if (e.totElDia) {
+    $("#n-dini").value = e.inici;
+    $("#n-dfi").value = isoDia(sumaDies(dataDe(e.fi), -1));
+  } else {
+    $("#n-dini").value = isoDia(new Date(e.inici)); $("#n-hini").value = horaLocal(e.inici);
+    $("#n-dfi").value = isoDia(new Date(e.fi)); $("#n-hfi").value = horaLocal(e.fi);
+  }
+  $("#n-lloc").value = e.lloc || "";
+  $("#n-nota").value = e.nota || "";
 }
 
 // Omple el formulari amb una proposta de l'assistent
 function omplenaNou(e) {
   if (!e) return;
   $("#n-titol").value = e.titol || "";
-  const qui = membre(e.persona) ? e.persona : "";
-  for (const b of document.querySelectorAll("[data-accio=nou-qui]")) b.setAttribute("aria-pressed", String(b.dataset.id === qui));
+  marcaPersones(membre(e.persona) ? [e.persona] : []);
   if (e.data) { $("#n-dini").value = e.data; $("#n-dfi").value = e.data_fi || e.data; }
   $("#n-totdia").checked = !e.hora_inici;
   if (e.hora_inici) $("#n-hini").value = e.hora_inici;
@@ -493,15 +538,19 @@ function omplenaNou(e) {
 }
 
 function estatNou() {
-  const qui = $("#form-nou [data-accio=nou-qui][aria-pressed=true]")?.dataset.id || null;
+  const persones = [...document.querySelectorAll("#form-nou [data-accio=nou-qui][aria-pressed=true]")].map((b) => b.dataset.id).filter(Boolean);
+  const qui = persones.length === 1 ? persones[0] : null;
   const tipus = $("#form-nou [data-accio=nou-permis][aria-pressed=true]")?.dataset.t || "";
   const imp = Number($("#n-import").value || 0);
   const calPermis = membre(qui)?.rol === "jove" && !!tipus && !(tipus === "cost" && imp < C.LLINDAR_COST);
-  return { qui, tipus, imp, calPermis };
+  return { qui, persones, tipus, imp, calPermis: calPermis && !editant };
 }
 function actualitzaNou() {
   const s = estatNou();
-  $("#n-permis").hidden = membre(s.qui)?.rol !== "jove";
+  $("#n-permis").hidden = !!editant || membre(s.qui)?.rol !== "jove";
+  $("#n-qui-text").textContent = s.persones.length ? s.persones.map(nom).join(", ") : "Tothom";
+  const serie = $("#n-serie")?.checked;
+  for (const id of ["#n-totdia", "#n-dini", "#n-dfi", "#n-hini", "#n-hfi"]) $(id).disabled = !!serie;
   $("#n-import-camp").hidden = s.tipus !== "cost";
   for (const el of document.querySelectorAll(".n-hores")) el.hidden = $("#n-totdia").checked;
   const info = $("#n-info");
@@ -524,8 +573,9 @@ async function desaNou(ev) {
     fi = new Date(`${dFi}T${$("#n-hfi").value || "10:00"}`).toISOString();
   }
   if (new Date(fi) <= new Date(inici)) { avisa("L'hora d'acabar ha de ser després de començar."); return; }
+  if (editant) return desaEdicio({ titol: $("#n-titol").value.trim(), inici, fi, totElDia: tot, persones: s.persones, colorGoogle: colorGoogleDe(s.persones), lloc: $("#n-lloc").value.trim(), nota: $("#n-nota").value.trim() });
   const e = {
-    titol: $("#n-titol").value.trim(), inici, fi, totElDia: tot, persona: s.qui,
+    titol: $("#n-titol").value.trim(), inici, fi, totElDia: tot, persona: s.qui, persones: s.persones, colorGoogle: colorGoogleDe(s.persones),
     lloc: $("#n-lloc").value.trim() || null, nota: $("#n-nota").value.trim() || null,
     permis: s.calPermis ? { tipus: s.tipus, import: s.tipus === "cost" ? s.imp : null, estat: esAdult() ? "confirmat" : "pendent", qui: esAdult() ? jo : null } : null,
   };
@@ -545,6 +595,20 @@ async function desaNou(ev) {
       asAfegits.add("e" + nouOrigen.index); nouOrigen = null; location.hash = "assistent";
     }
     else location.hash = "agenda";
+  } catch (err) { avisa(err.message); b.disabled = false; }
+}
+
+async function desaEdicio(canvis) {
+  const e = editant;
+  const serie = $("#n-serie")?.checked ? e.serie : null;
+  const b = $("#n-desa"); b.disabled = true;
+  try {
+    await Agenda.edita(e.id, canvis, serie);
+    vistos.delete(e.id);
+    editant = null;
+    avisa(serie ? "Desat a totes les repeticions." : "Desat.");
+    ag.dia = mitjanit(serie ? new Date(iniReal(e)) : dataDe(canvis.totElDia ? canvis.inici : isoDia(new Date(canvis.inici))));
+    location.hash = "agenda";
   } catch (err) { avisa(err.message); b.disabled = false; }
 }
 
@@ -1251,7 +1315,7 @@ function pantTriaPersona() {
 }
 
 const PANTALLES = {
-  inici: pantInici, agenda: pantAgenda, nou: pantNou, permis: pantPermis, assistent: pantAssistent,
+  inici: pantInici, agenda: pantAgenda, nou: (d) => pantNou(d), edita: pantEdita, permis: pantPermis, assistent: pantAssistent,
   tasques: pantTasques, tasca: pantTasca, "tasca-nova": pantTascaNova,
   compra: pantCompra, mes: pantMes, "desig-nou": pantDesigNou, "prestec-nou": pantPrestecNou,
   menu: (sub) => ({ persona: pantPersona, aspecte: pantAspecte, avisos: pantAvisos, dades: pantDades }[sub] ?? pantMenu)(),
@@ -1302,7 +1366,14 @@ const ACCIONS = {
   "mes-dia": (el) => { ag.dia = dataDe(el.dataset.dia); ag.vista = "dia"; desaPref("agenda-vista", "dia"); render(); },
 
   // Nou esdeveniment
-  "nou-qui": (el) => { premut(el); actualitzaNou(); },
+  "nou-qui": (el) => {
+    if (!el.dataset.id) marcaPersones([]);
+    else {
+      el.setAttribute("aria-pressed", String(el.getAttribute("aria-pressed") !== "true"));
+      $("[data-accio=nou-qui][data-id='']").setAttribute("aria-pressed", String(!estatNou().persones.length));
+    }
+    actualitzaNou();
+  },
   "nou-permis": (el) => { premut(el); actualitzaNou(); if (el.dataset.t === "cost") $("#n-import").focus(); },
 
   async "esborra-esdev"(el) {

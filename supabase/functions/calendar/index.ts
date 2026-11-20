@@ -13,6 +13,7 @@
 //   GET    ?des=ISO&fins=ISO      esdeveniments entre dues dates
 //   POST   {titol, inici, fi, totElDia, persona, lloc, nota, permis}   crea un esdeveniment
 //   PATCH  ?id=EVENT_ID {permis_estat, permis_qui, permis_comentari}   decideix un permís
+//   PATCH  ?id=EVENT_ID {canvis: {...}, serie}   edita (títol, dates, persones, color, lloc, nota)
 //   DELETE ?id=EVENT_ID           esborra un esdeveniment
 // =============================================================
 
@@ -121,7 +122,10 @@ function simplifica(e: any) {
     totElDia: !e.start?.dateTime,
     lloc: e.location ?? null,
     nota: p.nota || null,
-    persona: p.persona || null, // només la que ha desat l'app; la resta la dedueix l'app pel títol
+    persona: p.persona || null,
+    // Persones desades per l'app («a,b»; buit = tothom). null = no s'ha triat mai: l'app les dedueix pel títol.
+    persones: p.persones !== undefined ? String(p.persones).split(",").filter(Boolean) : (p.persona ? [p.persona] : null),
+    serie: e.recurringEventId ?? null, // id de la sèrie si és una repetició
     permis: p.permis_tipus
       ? {
         tipus: p.permis_tipus,
@@ -131,6 +135,15 @@ function simplifica(e: any) {
         comentari: p.permis_comentari || null,
       }
       : null,
+  };
+}
+
+// Propietats privades i color de Google a partir de les persones triades a l'app
+function propsPersones(persones: unknown, colorGoogle: unknown) {
+  const llista = (Array.isArray(persones) ? persones : []).map((x) => String(x).slice(0, 40)).slice(0, 10);
+  return {
+    privat: { persones: llista.join(","), persona: llista.length === 1 ? llista[0] : "" },
+    colorId: typeof colorGoogle === "string" && /^\d{1,2}$/.test(colorGoogle) ? colorGoogle : null,
   };
 }
 
@@ -173,10 +186,11 @@ Deno.serve(async (req) => {
     }
 
     if (req.method === "POST") {
-      const { titol, inici, fi, totElDia, persona, lloc, nota, permis } = await req.json();
+      const { titol, inici, fi, totElDia, persona, persones, colorGoogle, lloc, nota, permis } = await req.json();
       if (!titol || !inici || !fi) return json({ error: "Calen titol, inici i fi" }, 400);
       const pendent = permis?.estat === "pendent";
-      const privat: Record<string, string> = { persona: persona ?? "", origen: "app" };
+      const pp = propsPersones(persones ?? (persona ? [persona] : []), colorGoogle);
+      const privat: Record<string, string> = { ...pp.privat, origen: "app" };
       if (nota) privat.nota = String(nota).slice(0, 500);
       if (permis?.tipus) {
         privat.permis_tipus = String(permis.tipus);
@@ -191,6 +205,7 @@ Deno.serve(async (req) => {
         end: totElDia ? { date: fi } : { dateTime: fi, timeZone: TZ },
         // Sense «attendees»: un compte de servei no pot convidar persones.
         extendedProperties: { private: privat },
+        ...(pp.colorId ? { colorId: pp.colorId } : {}),
       };
       const r = await google("", { method: "POST", body: JSON.stringify(cos) });
       const d = await r.json();
@@ -199,9 +214,40 @@ Deno.serve(async (req) => {
     }
 
     if (req.method === "PATCH") {
-      // Decisió sobre un permís: {permis_estat:"confirmat", permis_qui, permis_comentari}
       if (!id) return json({ error: "Falta id" }, 400);
-      const { permis_estat, permis_qui, permis_comentari } = await req.json();
+      const cosPatch = await req.json();
+
+      // Edició d'un esdeveniment: {canvis: {titol, inici, fi, totElDia, persones, colorGoogle, lloc, nota}, serie: bool}
+      // Amb serie=true s'edita tota la sèrie (id = id de la sèrie) i no es toquen les dates.
+      if (cosPatch.canvis) {
+        const c = cosPatch.canvis;
+        const totaSerie = cosPatch.serie === true;
+        const r0 = await google(`/${encodeURIComponent(id)}`);
+        const e = await r0.json();
+        if (!r0.ok) return errorGoogle(e, r0.status);
+        const pp = propsPersones(c.persones, c.colorGoogle);
+        const privat = { ...(e.extendedProperties?.private ?? {}), ...pp.privat };
+        if (c.nota !== undefined) privat.nota = String(c.nota ?? "").slice(0, 500);
+        const pendent = privat.permis_estat === "pendent";
+        // deno-lint-ignore no-explicit-any
+        const patch: Record<string, any> = {
+          extendedProperties: { private: privat },
+          colorId: pp.colorId, // null = color del calendari
+        };
+        if (c.titol) patch.summary = (pendent ? PREFIX : "") + String(c.titol).slice(0, 200);
+        if (c.lloc !== undefined) patch.location = c.lloc ?? "";
+        if (!totaSerie && c.inici && c.fi) {
+          patch.start = c.totElDia ? { date: c.inici, dateTime: null } : { dateTime: c.inici, date: null, timeZone: TZ };
+          patch.end = c.totElDia ? { date: c.fi, dateTime: null } : { dateTime: c.fi, date: null, timeZone: TZ };
+        }
+        const r = await google(`/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(patch) });
+        const d = await r.json();
+        if (!r.ok) return errorGoogle(d, r.status);
+        return json({ esdeveniment: simplifica(d) });
+      }
+
+      // Decisió sobre un permís: {permis_estat:"confirmat", permis_qui, permis_comentari}
+      const { permis_estat, permis_qui, permis_comentari } = cosPatch;
       const r0 = await google(`/${encodeURIComponent(id)}`);
       const e = await r0.json();
       if (!r0.ok) return errorGoogle(e, r0.status);

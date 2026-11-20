@@ -144,6 +144,8 @@ h2 .punt-avis { top: -4px; right: -8px; }
   color: var(--text); text-decoration: none; border: 2px solid transparent; width: 100%; text-align: left; cursor: pointer;
 }
 .element.avis { border-color: var(--avis-vora); }
+.element.amb-franja { position: relative; overflow: hidden; padding-left: 20px; }
+.franja-persona { position: absolute; left: 0; top: 0; bottom: 0; width: 8px; }
 .element.pendent { border: 2px dashed var(--avis-vora); }
 .element .cos { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .element .cos b { overflow-wrap: anywhere; }

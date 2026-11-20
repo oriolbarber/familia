@@ -43,6 +43,9 @@ Format: data · decisió · motiu · estat (vigent / pendent de confirmar / subs
 | 2026-11-20 | Aprenentatge de l'assistent: cada proposta acceptada, editada (amb el resultat final) o descartada es desa a `assistent_decisions`. Cada 1–2 mesos s'exporta des de l'app i es revisa en un xat (`docs/xats/08`) per actualitzar `ASSISTENT_CONTEXT` | Millorar el context amb l'ús real, sense entrenar res ni guardar fotos | Vigent |
 | 2026-11-20 | Les propostes tenen botó «Descarta» i la llista de la compra proposada es pot corregir abans d'afegir-la | Saber què no interessa i quines correccions es fan | Vigent |
 | 2026-11-20 | De qui és un esdeveniment creat a Google: **pel nom al títol** («Gael | …», «LAU | …», «URILAU»), amb àlies i grups a `config.js`; sense nom → tothom. Un esdeveniment pot ser de diverses persones | La Laura crea gairebé tots els esdeveniments (també els dels fills) i des de dos correus: el creador no indica de qui és | Vigent |
+| 2026-11-20 | Camp «Per a qui» amb una o més persones (cap = tothom) en crear i **editar** esdeveniments; s'edita des del detall. En les repeticions es pot aplicar a tota la sèrie (sense tocar les dates) | Assignar bé les cites que el títol no diu de qui són | Vigent |
+| 2026-11-20 | Colors: franja de color de la persona a la vista Dia (franges si n'hi ha diverses) i blocs combinats a Setmana. En desar des de l'app, la cita pren a Google Calendar el color de la persona (`google` a `config.js`); si és de diverses persones o de tothom, el del calendari | Veure d'un cop d'ull de qui és cada cita, també a Google | Vigent |
+| 2026-11-20 | Les persones triades a l'app (també «tothom») tenen prioritat sobre les deduïdes pel títol | L'assignació manual mana | Vigent |
 
 ## Per què el compte de servei (xat 01)
 

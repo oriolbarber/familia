@@ -38,6 +38,8 @@ Format: data · decisió · motiu · estat (vigent / pendent de confirmar / subs
 | 2026-11-20 | Límit de 20 consultes per persona cada 24 h + límit de despesa de 2 $/mes a la consola d'Anthropic | Evitar sorpreses de cost | Vigent |
 | 2026-11-20 | Els joves revisen cada esdeveniment proposat al formulari (amb el selector de permís); els adults el poden afegir directament | Mantenir el circuit de permisos | Vigent |
 | 2026-11-20 | Les fotos es redueixen a 1.600 px i JPEG al mòbil abans d'enviar-les; no es desen enlloc | Menys cost i més privacitat | Vigent |
+| 2026-11-20 | Regles de l'assistent per a votacions («(per confirmar)»), calendaris de competició (només el que afecta la família), dates contradictòries i llistes a mà (copiar tal com està escrit) | Provat amb exemples reals: enquesta de WhatsApp, calendari d'iSquad i pissarra de la cuina | Vigent |
+| 2026-11-20 | Context de la família en el secret `ASSISTENT_CONTEXT`, no al repositori | Conté informació personal i el repositori és públic | Vigent |
 
 ## Per què el compte de servei (xat 01)
 

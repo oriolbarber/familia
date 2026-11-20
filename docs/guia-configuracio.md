@@ -119,6 +119,16 @@ L'assistent fa servir **Claude Haiku 5.5** a través de l'API d'Anthropic. Cada 
 Opcionals (secrets):
 - `ASSISTENT_LIMIT`: consultes per persona cada 24 hores (per defecte 20).
 - `ASSISTENT_MODEL`: per canviar de model sense tocar el codi (per defecte `claude-haiku-5-5`).
+- `ASSISTENT_CONTEXT`: **recomanat.** Unes línies sobre la família perquè l'assistent sàpiga què és rellevant i de qui és cada cosa. Exemple (adapta-ho):
+
+  ```
+  - El Gael juga a vòlei a l'infantil masculí del CV Premià de Mar. Dels calendaris de partits, només ens interessen els seus.
+  - «Premia Rocks» és el grup de música de [qui]. Els assajos són de [qui].
+  - Coco és el gos (el «pinso Coco» és el seu menjar).
+  - Vivim a Premià de Mar.
+  ```
+
+  Va com a secret perquè el repositori és públic. Quan canviïs el text, no cal tornar a pujar la funció.
 
 Per veure el consum del mes, a l'SQL Editor:
 

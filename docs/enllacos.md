@@ -16,6 +16,7 @@
 | Supabase | https://supabase.com/dashboard |
 | Consola d'Anthropic (assistent: crèdit, límit, clau) | https://platform.claude.com |
 | Dissenys (llenç) | https://claude.ai/artifact/HuhkiT2afgrYtwWzUTHZs8 |
+| Xat d'estètica de l'app | https://claude.ai/code/session_01StPMadcWkSBpLzv11nATwN |
 | Xat per parlar de l'app (sense canvis de codi) | https://claude.ai/code/session_01StPMafvtrmyGLURM7U46n3 |
 | Xat de la prova de concepte | https://claude.ai/code/session_01StPMaeUJfej54PofYhXXt7 |
 

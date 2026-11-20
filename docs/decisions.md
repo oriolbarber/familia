@@ -32,6 +32,7 @@ Format: data · decisió · motiu · estat (vigent / pendent de confirmar / subs
 | 2026-11-08 | Punts vermells amb número a la barra inferior i a les seccions quan tens alguna cosa per respondre | Comentari de l'Oriol; el número fa que no depengui només del color | Vigent |
 | 2026-11-20 | Membres: Oriol (`oriol`, adult), Laura (`laura`, adulta), Bruna (`bruna`, jove), Gael (`gael`, jove). Inicials O, L, B, G i colors blau, taronja, verd blau i lila | Noms reals; els `id` han de coincidir amb `MEMBRES_CORREUS` | Vigent |
 | 2026-11-20 | L'app publicada va en mode connectat (`FUNCIONS_URL` del Supabase real). El mode prova queda per a quan la URL és buida o la de plantilla | Començar a fer servir GLOB | Vigent |
+| 2026-11-20 | En mode connectat, l'app esborra un sol cop les dades d'exemple que quedin al mòbil (tasques, compra, desitjos, préstecs, historial). L'agenda no es toca: ve de GLOB | Començar de zero amb dades reals | Vigent |
 
 ## Per què el compte de servei (xat 01)
 

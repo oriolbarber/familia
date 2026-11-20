@@ -201,5 +201,12 @@
     },
   };
 
+  // En mode connectat, esborra un sol cop les dades d'exemple que hagin quedat
+  // d'haver obert l'app en mode prova (tasques, compra, desitjos, préstecs, historial).
+  if (!MODE_PROVA && (local.llegeix("prova:llavor-v2") || local.llegeix("prova:llavor"))) {
+    Col.reinicia();
+    local.esborra("prova:llavor");
+  }
+
   window.Dades = { MODE_PROVA, local, crida, Agenda, Col, isoDia, iniReal, fiReal, DIA };
 })();

@@ -67,23 +67,35 @@ h1, h2, h3, p { margin: 0; }
 /* ---------- Franja de mode prova ---------- */
 .franja {
   background: var(--avis-fons); color: var(--avis-text); text-align: center;
-  font-size: .8rem; font-weight: 700; padding: calc(4px + env(safe-area-inset-top)) 12px 4px;
+  font-size: .72rem; font-weight: 700; line-height: 1.25; padding: calc(3px + env(safe-area-inset-top)) 8px 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
 /* ---------- Barra superior ---------- */
 .barra {
   position: sticky; top: 0; z-index: 5; background: var(--fons);
-  display: flex; align-items: center; gap: 12px;
-  width: 100%; max-width: 720px; margin: 0 auto; padding: 14px 8px 10px 20px;
+  display: flex; align-items: center; gap: 4px;
+  width: 100%; max-width: 720px; margin: 0 auto; padding: 6px 4px 6px 16px;
 }
+.barra .icona-boto { width: 44px; height: 44px; border-radius: 22px; }
 .barra .titol { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-.barra .titol b { font-size: 1.45rem; line-height: 1.15; }
-.barra .titol span { color: var(--suau); font-size: .9rem; }
+.barra .titol b { font-size: 1.3rem; line-height: 1.15; }
+.barra .titol span { color: var(--suau); font-size: .85rem; line-height: 1.25; }
 .barra.sub {
-  display: grid; grid-template-columns: 56px 1fr 56px; padding: 8px;
+  display: grid; grid-template-columns: 48px 1fr 48px; padding: 4px;
   background: var(--sup); border-bottom: 1px solid var(--linia); max-width: none;
 }
-.barra.sub .titol { text-align: center; font-size: 1.1rem; font-weight: 700; }
+.barra.sub .titol { text-align: center; font-size: 1.1rem; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+
+/* Capçalera de l'Inici: avatar · data · icones; el resum, a tota l'amplada a sota */
+.barra:has(> .cap-inici) {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; column-gap: 4px; row-gap: 2px; padding-top: 4px;
+}
+.barra > .cap-inici { display: contents; }
+.cap-inici b { grid-column: 2; grid-row: 1; padding-left: 6px; font-size: 1.15rem; line-height: 1.15; }
+.cap-inici span { grid-column: 1 / -1; grid-row: 2; padding-bottom: 2px; }
+.barra .persona-cap { grid-row: 1; display: grid; place-items: center; min-width: 44px; min-height: 44px; text-decoration: none; }
+.barra .persona-cap .inicial { width: 40px; height: 40px; font-size: 1rem; }
 
 /* ---------- Navegació inferior ---------- */
 .nav {

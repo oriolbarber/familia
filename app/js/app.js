@@ -249,8 +249,8 @@ async function pantInici() {
   }
 
   const cap = h`
-    <a href="#menu/persona" aria-label="Canvia de persona" style="text-decoration:none">${inicial(jo, "gran")}</a>
-    <div class="titol"><b>${majuscula(fDiaLlarg.format(ara))}</b><span>${plural(dAvui.length, "cosa avui", "coses avui")} · ${toca.length ? plural(toca.length, "et demana alguna cosa", "et demanen alguna cosa") : "res pendent"}</span></div>
+    <a class="persona-cap" href="#menu/persona" aria-label="Canvia de persona">${inicial(jo, "gran")}</a>
+    <div class="titol cap-inici"><b>${majuscula(fDiaLlarg.format(ara))}</b><span>${plural(dAvui.length, "cosa avui", "coses avui")} · ${toca.length ? plural(toca.length, "et demana alguna cosa", "et demanen alguna cosa") : "res pendent"}</span></div>
     <a class="icona-boto" href="#assistent" aria-label="Assistent">${I.assistent}</a>
     <a class="icona-boto" href="#menu" aria-label="Menú">${I.menu}</a>`;
 

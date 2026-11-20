@@ -11,7 +11,7 @@ window.CONFIG = {
   LLINDAR_COST: 20,
 
   // Membres: id estable, nom, rol (adult/jove), color i inicial (per a daltònics).
-  // Els correus NO van aquí (repositori públic): van al secret MEMBRES_CORREUS de Supabase.
+  // «alies»: altres maneres d'escriure el nom als títols de Google Calendar (en minúscula, sense accents).
   MEMBRES: [
     { id: "oriol", nom: "Oriol", rol: "adult", color: "#1F5FBF", inicial: "O", alies: ["uri"] },
     { id: "laura", nom: "Laura", rol: "adult", color: "#B4480F", inicial: "L", alies: ["lau"] },

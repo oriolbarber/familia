@@ -57,7 +57,7 @@ Fes-ho només una vegada.
 |---|---|
 | `GOOGLE_SA_JSON` | Tot el contingut del fitxer JSON del pas 2.4 (obre'l amb un editor de text i copia-ho tot) |
 | `GOOGLE_CALENDAR_ID` | L'ID de GLOB (pas 1.2) |
-| `MEMBRES_CORREUS` | `{"correu1@gmail.com":"oriol","correu2@gmail.com":"adult2","correu3@gmail.com":"jove1","correu4@gmail.com":"jove2"}` amb els correus reals i els `id` de `app/config.js` |
+| `MEMBRES_CORREUS` | `{"correu-oriol@gmail.com":"oriol","correu-laura@gmail.com":"laura","correu-bruna@gmail.com":"bruna","correu-gael@gmail.com":"gael"}` amb els correus reals. Els `id` han de ser exactament aquests (els de `app/config.js`) |
 | `FAMILIA_CODI` | Una contrasenya que inventes (mínim 12 caràcters). És la que escriurà cada membre la primera vegada |
 | `VAPID_KEYS` | El JSON del pas 4 |
 | `VAPID_CONTACT` | `mailto:` + el teu correu |
@@ -66,7 +66,7 @@ Fes-ho només una vegada.
 
 **Edge Functions → Deploy a new function → Via Editor**, dues vegades:
 
-1. Nom `calendar`: enganxa `supabase/functions/calendar/index.ts` → **Deploy**.
+1. Nom `calendar`: enganxa `supabase/functions/calendar/index.ts` → **Deploy**. Si la vas pujar abans del 8 de novembre, torna-la a pujar: la versió nova gestiona permisos, esdeveniments de tot el dia i `MEMBRES_CORREUS`.
 2. Nom `push-prova`: enganxa `supabase/functions/push-prova/index.ts` → **Deploy**.
 
 A cada funció, a **Details**, **desactiva "Enforce JWT verification"** (verify JWT). La protecció és el codi familiar fins que la Fase A afegeixi l'inici de sessió.

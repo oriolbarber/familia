@@ -30,6 +30,8 @@ Format: data · decisió · motiu · estat (vigent / pendent de confirmar / subs
 | 2026-11-08 | Tasques: es poden proposar a una altra persona; una tasca nova proposada **no és activa fins que s'accepta**. Si la rebutja, qui la va proposar la pot deixar lliure o proposar-la a algú altre | Comentari de l'Oriol; principi «facilitar acords» | Vigent |
 | 2026-11-08 | Préstecs: les dues persones han d'estar d'acord per crear-lo i per donar-lo per retornat. Els adults els veuen però no poden confirmar per altres | Comentari de l'Oriol | Vigent |
 | 2026-11-08 | Punts vermells amb número a la barra inferior i a les seccions quan tens alguna cosa per respondre | Comentari de l'Oriol; el número fa que no depengui només del color | Vigent |
+| 2026-11-20 | Membres: Oriol (`oriol`, adult), Laura (`laura`, adulta), Bruna (`bruna`, jove), Gael (`gael`, jove). Inicials O, L, B, G i colors blau, taronja, verd blau i lila | Noms reals; els `id` han de coincidir amb `MEMBRES_CORREUS` | Vigent |
+| 2026-11-20 | L'app publicada va en mode connectat (`FUNCIONS_URL` del Supabase real). El mode prova queda per a quan la URL és buida o la de plantilla | Començar a fer servir GLOB | Vigent |
 
 ## Per què el compte de servei (xat 01)
 

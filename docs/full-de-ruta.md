@@ -11,7 +11,7 @@ Cada etapa és **un xat** (prompt a `docs/xats/`). No es comença la següent fi
 - [ ] Llista inicial de tasques recurrents i interval màxim de cadascuna
 - [ ] Hora del resum del matí; també caps de setmana?
 - [x] Repositori a GitHub creat (`oriolbarber/familia`)
-- [ ] Projecte Supabase creat (pla gratuït)
+- [x] Projecte Supabase creat (pla gratuït)
 
 ## 1 · Prova de concepte — `xats/01-prova-de-concepte.md`
 
@@ -27,7 +27,9 @@ Cada etapa és **un xat** (prompt a `docs/xats/`). No es comença la següent fi
 - [x] Llenç de dissenys i comentaris de l'Oriol
 - [x] App navegable amb totes les seccions (Inici, Agenda dia/setmana/mes, permisos, tasques, compra, desitjos, préstecs, menú ⋮)
 - [x] Mode prova amb dades d'exemple; mode connectat amb GLOB via `calendar`
-- [ ] Noms reals de la família a `config.js`
+- [x] Noms reals de la família a `config.js` (Oriol, Laura, Bruna, Gael)
+- [x] `config.js` apunta al Supabase real (`rxuchoduwgxatnxqjysf`)
+- [ ] Provar el mode connectat amb GLOB als mòbils (cal la funció `calendar` actualitzada i el secret `MEMBRES_CORREUS`)
 - [ ] Confirmar el llindar de cost (ara 20 €)
 
 ## 2 · Model de dades — `xats/02-model-de-dades.md`

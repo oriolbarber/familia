@@ -1,8 +1,8 @@
 // Configuració pública de la PWA (aquí no hi va cap secret).
 window.CONFIG = {
   // Supabase › Project Settings › API › Project URL + "/functions/v1".
-  // Mentre contingui "EL-TEU-PROJECTE", l'app funciona en MODE PROVA amb dades d'exemple.
-  FUNCIONS_URL: "https://EL-TEU-PROJECTE.supabase.co/functions/v1",
+  // Si es buida o conté "EL-TEU-PROJECTE", l'app funciona en MODE PROVA amb dades d'exemple.
+  FUNCIONS_URL: "https://rxuchoduwgxatnxqjysf.supabase.co/functions/v1",
 
   // Clau pública VAPID (la que mostra app/eines/vapid.html). És pública per disseny.
   VAPID_PUBLICA: "",
@@ -14,8 +14,8 @@ window.CONFIG = {
   // Els correus NO van aquí (repositori públic): van al secret MEMBRES_CORREUS de Supabase.
   MEMBRES: [
     { id: "oriol", nom: "Oriol", rol: "adult", color: "#1F5FBF", inicial: "O" },
-    { id: "adult2", nom: "Adult 2", rol: "adult", color: "#B4480F", inicial: "A" },
-    { id: "jove1", nom: "Jove 1", rol: "jove", color: "#0E7C73", inicial: "1" },
-    { id: "jove2", nom: "Jove 2", rol: "jove", color: "#7A3FB8", inicial: "2" },
+    { id: "laura", nom: "Laura", rol: "adult", color: "#B4480F", inicial: "L" },
+    { id: "bruna", nom: "Bruna", rol: "jove", color: "#0E7C73", inicial: "B" },
+    { id: "gael", nom: "Gael", rol: "jove", color: "#7A3FB8", inicial: "G" },
   ],
 };

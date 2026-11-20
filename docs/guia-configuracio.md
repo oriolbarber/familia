@@ -101,3 +101,28 @@ A cada mòbil:
 4. **Agenda → Nou** → crea un esdeveniment de prova i comprova que surt a Google Calendar (GLOB). Esborra'l des del detall, lliscant.
 5. **⋮ → Avisos → Activa els avisos** → accepta el permís → **Envia'm una prova**. Ha d'arribar una notificació.
 6. Al mateix lloc, obre **Diagnòstic** i apunta les dades a la taula de `docs/decisions.md` (secció "Resultats de la prova de concepte").
+
+---
+
+## 9 · Assistent (fotos, captures, PDF i text → propostes)
+
+L'assistent fa servir **Claude Haiku 5.5** a través de l'API d'Anthropic. Cada consulta amb foto costa uns 0,05 cèntims; amb un ús normal de la família, uns 0,15 € al mes. L'API es paga a part de la subscripció de Claude.
+
+1. **Compte i crèdit.** A [platform.claude.com](https://platform.claude.com) entra amb el teu compte, ves a **Billing** i compra el crèdit mínim. És prepagament: quan s'acaba, l'assistent deixa de funcionar i no hi ha cap càrrec extra.
+2. **Límit de despesa.** A **Limits** (o *Spend limits*), posa un límit mensual de **2 $**.
+3. **Clau.** A **API Keys → Create Key**, nom `familia-assistent`. Copia-la (només es veu un cop). **No l'enviïs per xat ni la posis al repositori.**
+4. **Secret a Supabase.** Edge Functions → Secrets → `ANTHROPIC_API_KEY` = la clau.
+5. **Taula d'usos.** SQL Editor → executa `supabase/migrations/0002_assistent.sql`.
+6. **Funció.** Edge Functions → Deploy a new function → Via Editor → nom `assistent` → enganxa `supabase/functions/assistent/index.ts` → **Deploy**. A **Details**, desactiva **Enforce JWT verification**.
+7. **Prova.** A l'app, toca la icona ✦ (Inici, Agenda o Compra), fes una foto d'una circular o escriu «dijous metge de la Bruna a les 5 i mitja» → **Interpreta**.
+
+Opcionals (secrets):
+- `ASSISTENT_LIMIT`: consultes per persona cada 24 hores (per defecte 20).
+- `ASSISTENT_MODEL`: per canviar de model sense tocar el codi (per defecte `claude-haiku-5-5`).
+
+Per veure el consum del mes, a l'SQL Editor:
+
+```sql
+select persona, count(*) usos, sum(tokens_entrada) entrada, sum(tokens_sortida) sortida
+from assistent_usos where quan >= date_trunc('month', now()) group by persona;
+```

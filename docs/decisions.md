@@ -33,6 +33,11 @@ Format: data · decisió · motiu · estat (vigent / pendent de confirmar / subs
 | 2026-11-20 | Membres: Oriol (`oriol`, adult), Laura (`laura`, adulta), Bruna (`bruna`, jove), Gael (`gael`, jove). Inicials O, L, B, G i colors blau, taronja, verd blau i lila | Noms reals; els `id` han de coincidir amb `MEMBRES_CORREUS` | Vigent |
 | 2026-11-20 | L'app publicada va en mode connectat (`FUNCIONS_URL` del Supabase real). El mode prova queda per a quan la URL és buida o la de plantilla | Començar a fer servir GLOB | Vigent |
 | 2026-11-20 | En mode connectat, l'app esborra un sol cop les dades d'exemple que quedin al mòbil (tasques, compra, desitjos, préstecs, historial). L'agenda no es toca: ve de GLOB | Començar de zero amb dades reals | Vigent |
+| 2026-11-20 | Assistent dins l'app amb **Claude Haiku 5.5** (funció `assistent`): llegeix fotos, captures, PDF i text i retorna propostes; **mai escriu res sense confirmació** | Cost molt baix (~0,15 €/mes); el model és configurable amb `ASSISTENT_MODEL` | Vigent |
+| 2026-11-20 | Àudio: dictat amb el micròfon del teclat del mòbil (l'API no rep àudio) | Gratuït i funciona a Android i iPhone | Vigent |
+| 2026-11-20 | Límit de 20 consultes per persona cada 24 h + límit de despesa de 2 $/mes a la consola d'Anthropic | Evitar sorpreses de cost | Vigent |
+| 2026-11-20 | Els joves revisen cada esdeveniment proposat al formulari (amb el selector de permís); els adults el poden afegir directament | Mantenir el circuit de permisos | Vigent |
+| 2026-11-20 | Les fotos es redueixen a 1.600 px i JPEG al mòbil abans d'enviar-les; no es desen enlloc | Menys cost i més privacitat | Vigent |
 
 ## Per què el compte de servei (xat 01)
 

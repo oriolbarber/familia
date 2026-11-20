@@ -2,7 +2,7 @@
 // Família · interfície
 // Seccions: 1 Utilitats · 2 Persones · 3 Icones · 4 Dates · 5 Estructura
 //           6 Inici · 7 Agenda · 8 Esdeveniments i permisos · 9 Tasques
-//           10 Compra · 11 Més · 12 Menú ⋮ · 13 Entrada · 14 Accions · 15 Inici de l'app
+//           10 Compra · 11 Més · 11b Assistent · 12 Menú ⋮ · 13 Entrada · 14 Accions · 15 Inici de l'app
 // =============================================================
 "use strict";
 
@@ -81,6 +81,7 @@ const I = {
   disc: svg('<path d="M4 4h13l3 3v13H4z"/><path d="M8 4v5h8V4M8 20v-6h8v6"/>'),
   sol: svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
   lluna: svg('<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>'),
+  assistent: svg('<path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 14l.8 2.2 2.2.8-2.2.8L19 20l-.8-2.2-2.2-.8 2.2-.8z"/>'),
   sortir: svg('<path d="M15 4h4v16h-4M10 17l5-5-5-5M15 12H3"/>'),
 };
 
@@ -224,6 +225,7 @@ async function pantInici() {
   const cap = h`
     <a href="#menu/persona" aria-label="Canvia de persona" style="text-decoration:none">${inicial(jo, "gran")}</a>
     <div class="titol"><b>${majuscula(fDiaLlarg.format(ara))}</b><span>${plural(dAvui.length, "cosa avui", "coses avui")} · ${toca.length ? plural(toca.length, "et demana alguna cosa", "et demanen alguna cosa") : "res pendent"}</span></div>
+    <a class="icona-boto" href="#assistent" aria-label="Assistent">${I.assistent}</a>
     <a class="icona-boto" href="#menu" aria-label="Menú">${I.menu}</a>`;
 
   const tarjaAra = primer
@@ -293,6 +295,7 @@ async function pantAgenda() {
 
   return {
     tab: "agenda", titol: "Agenda",
+    dreta: h`<a class="icona-boto" href="#assistent" aria-label="Assistent">${I.assistent}</a>`,
     cos: h`${seg}${filtres}${avisDesat}<div style="margin-top:12px">${cos}</div>
       <a class="fab" href="#nou/${isoDia(ag.dia)}">${I.mes1}Nou</a>`,
     despres,
@@ -455,8 +458,27 @@ async function pantNou(dataIso) {
       <div class="camp"><label for="n-nota">Nota <span class="ajuda">(opcional)</span></label><textarea id="n-nota" maxlength="500"></textarea></div>
       <button id="n-desa" class="boto primari ample" type="submit">Desa</button>
     </form>`,
-    despres: () => { $("#form-nou").onsubmit = desaNou; $("#n-totdia").onchange = actualitzaNou; $("#n-import").oninput = actualitzaNou; actualitzaNou(); $("#n-titol").focus(); },
+    despres: () => {
+      $("#form-nou").onsubmit = desaNou; $("#n-totdia").onchange = actualitzaNou; $("#n-import").oninput = actualitzaNou;
+      if (nouOrigen) omplenaNou(asProposta?.esdeveniments[nouOrigen.index]);
+      actualitzaNou(); $("#n-titol").focus();
+    },
   };
+}
+
+// Omple el formulari amb una proposta de l'assistent
+function omplenaNou(e) {
+  if (!e) return;
+  $("#n-titol").value = e.titol || "";
+  const qui = membre(e.persona) ? e.persona : "";
+  for (const b of document.querySelectorAll("[data-accio=nou-qui]")) b.setAttribute("aria-pressed", String(b.dataset.id === qui));
+  if (e.data) { $("#n-dini").value = e.data; $("#n-dfi").value = e.data_fi || e.data; }
+  $("#n-totdia").checked = !e.hora_inici;
+  if (e.hora_inici) $("#n-hini").value = e.hora_inici;
+  if (e.hora_fi) $("#n-hfi").value = e.hora_fi;
+  else if (e.hora_inici) { const [hh, mm] = e.hora_inici.split(":").map(Number); $("#n-hfi").value = `${String((hh + 1) % 24).padStart(2, "0")}:${String(mm).padStart(2, "0")}`; }
+  $("#n-lloc").value = e.lloc || "";
+  $("#n-nota").value = e.nota || "";
 }
 
 function estatNou() {
@@ -502,7 +524,8 @@ async function desaNou(ev) {
     if (e.permis?.estat === "confirmat") Col.afegeix("historial", { titol: e.titol, persona: e.persona, tipus: e.permis.tipus, estat: "confirmat", qui: jo, quan: new Date().toISOString(), comentari: "Creat per un adult" });
     avisa(e.permis?.estat === "pendent" ? "Enviat. Esperant permís." : "Desat.");
     ag.dia = mitjanit(dataDe(dIni));
-    location.hash = "agenda";
+    if (nouOrigen) { asAfegits.add("e" + nouOrigen.index); nouOrigen = null; location.hash = "assistent"; }
+    else location.hash = "agenda";
   } catch (err) { avisa(err.message); b.disabled = false; }
 }
 
@@ -769,6 +792,7 @@ function pantCompra() {
   const fets = items.filter((i) => i.comprat);
   const fila = (i) => h`<label><input type="checkbox" data-accio="compra-marca" data-id="${i.id}" ${i.comprat ? raw("checked") : ""}><span class="nom">${i.nom}</span>${i.quantitat ? h`<span class="quant">${i.quantitat}</span>` : ""}</label>`;
   return {
+    dreta: h`<a class="icona-boto" href="#assistent" aria-label="Assistent">${I.assistent}</a>`,
     tab: "compra", titol: "Compra", subtitol: pend.length ? plural(pend.length, "cosa", "coses") : "Llista buida",
     cos: h`<form id="form-compra" class="fila" style="margin-bottom:12px" autocomplete="off">
         <label for="c-nou" class="oculta">Afegeix a la llista</label>
@@ -952,6 +976,107 @@ function pantPrestecNou() {
 const avisLocal = () => h`<p class="buit" style="font-size:.8rem;margin-top:16px">De moment, aquestes dades només es desen en aquest mòbil. Quan connectem Supabase es compartiran amb tota la família.</p>`;
 
 // =============================================================
+// 11b · Assistent: foto, captura, PDF o text → propostes per confirmar
+// =============================================================
+let asText = "";
+let asFitxers = [];      // [{ media_type, data (base64), nom, vista (dataURL o null) }]
+let asProposta = null;   // última resposta
+let asAfegits = new Set(); // claus "e0", "t1", "compra"
+let asCarregant = false;
+let nouOrigen = null;    // { index } quan el formulari «Nou» ve de l'assistent
+
+const MAX_COSTAT = 1600;
+
+async function preparaFitxer(file) {
+  if (file.type === "application/pdf") {
+    if (file.size > 3.5 * 1024 * 1024) throw new Error("El PDF és massa gran (màxim 3,5 MB).");
+    const b64 = await new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.onerror = ko; r.readAsDataURL(file); });
+    return { media_type: "application/pdf", data: b64, nom: file.name, vista: null };
+  }
+  // Imatges: es redueixen a 1600 px i es passen a JPEG (pugen més ràpid i costen menys)
+  let bmp;
+  try { bmp = await createImageBitmap(file); }
+  catch { throw new Error(`No s'ha pogut llegir «${file.name}».`); }
+  const esc = Math.min(1, MAX_COSTAT / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas");
+  c.width = Math.round(bmp.width * esc); c.height = Math.round(bmp.height * esc);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  const url = c.toDataURL("image/jpeg", 0.85);
+  return { media_type: "image/jpeg", data: url.split(",")[1], nom: file.name, vista: url };
+}
+
+function quanProposta(e) {
+  if (!e.data) return "Sense data";
+  const d = dataDe(e.data);
+  let t = majuscula(fDiaLlarg.format(d));
+  if (e.data_fi && e.data_fi !== e.data) t += ` → ${fDiaLlarg.format(dataDe(e.data_fi))}`;
+  if (e.hora_inici) t += ` · ${e.hora_inici}${e.hora_fi ? `–${e.hora_fi}` : ""}`;
+  else t += " · tot el dia";
+  return t;
+}
+
+function esdevDeProposta(e) {
+  const persona = membre(e.persona) ? e.persona : null;
+  const dFi = e.data_fi || e.data;
+  if (!e.hora_inici) return { titol: e.titol, inici: e.data, fi: isoDia(sumaDies(dataDe(dFi), 1)), totElDia: true, persona, lloc: e.lloc || null, nota: e.nota || null, permis: null };
+  const inici = new Date(`${e.data}T${e.hora_inici}`);
+  let fi = e.hora_fi ? new Date(`${dFi}T${e.hora_fi}`) : new Date(inici.getTime() + 36e5);
+  if (fi <= inici) fi = new Date(inici.getTime() + 36e5);
+  return { titol: e.titol, inici: inici.toISOString(), fi: fi.toISOString(), totElDia: false, persona, lloc: e.lloc || null, nota: e.nota || null, permis: null };
+}
+
+function pantAssistent() {
+  const p = asProposta;
+  const fet = (k) => asAfegits.has(k);
+  const marcaFet = h`<span class="fila" style="justify-content:center;color:var(--suau);font-weight:700">${I.ok}Afegit</span>`;
+  const resultat = !p ? "" : h`<div class="seccio">
+    <h2>Proposta</h2>
+    <p>${p.resum}</p>
+    ${p.dubtes?.length ? h`<div class="avis-caixa">${I.alerta}<span>${p.dubtes.join(" · ")}</span></div>` : ""}
+    ${p.esdeveniments.map((e, i) => h`<section class="targeta">
+      <div class="fila">${inicial(membre(e.persona) ? e.persona : null)}<div style="display:flex;flex-direction:column;min-width:0"><b style="overflow-wrap:anywhere">${e.titol}</b><span style="color:var(--suau);font-size:.9rem">${quanProposta(e)}${e.lloc ? ` · ${e.lloc}` : ""}</span></div></div>
+      ${e.nota ? h`<span style="font-size:.9rem">${e.nota}</span>` : ""}
+      ${fet("e" + i) ? marcaFet : esAdult()
+        ? h`<div class="graella2"><button class="boto" data-accio="as-edita" data-i="${i}">Edita</button><button class="boto primari" data-accio="as-afegeix-esdev" data-i="${i}">Afegeix</button></div>`
+        : h`<button class="boto primari ample" data-accio="as-edita" data-i="${i}">Revisa i afegeix</button>`}
+    </section>`)}
+    ${p.compra.length ? h`<section class="targeta"><b>Per a la compra</b>
+      <div class="llista">${p.compra.map((c, i) => h`<label><input type="checkbox" class="as-compra" data-i="${i}" ${fet("compra") ? raw("disabled") : raw("checked")}><span class="nom">${c.nom}</span>${c.quantitat ? h`<span class="quant">${c.quantitat}</span>` : ""}</label>`)}</div>
+      ${fet("compra") ? marcaFet : h`<button class="boto primari ample" data-accio="as-afegeix-compra">Afegeix a la compra</button>`}
+    </section>` : ""}
+    ${p.tasques.map((t, i) => h`<section class="targeta">
+      <b>${t.nom}</b><span style="color:var(--suau);font-size:.9rem">Tasca · ${t.tipus === "recurrent" ? `cada ${t.cada_dies || 7} dies` : t.data_limit ? `abans del ${fDiaCurt.format(dataDe(t.data_limit))}` : "un sol cop"}</span>
+      ${fet("t" + i) ? marcaFet : h`<button class="boto primari ample" data-accio="as-afegeix-tasca" data-i="${i}">Afegeix com a tasca lliure</button>`}
+    </section>`)}
+    ${!p.esdeveniments.length && !p.compra.length && !p.tasques.length ? h`<p class="buit">No hi he trobat res per afegir.</p>` : ""}
+    <button class="boto ample" data-accio="as-nou">Comença de nou</button>
+  </div>`;
+
+  return {
+    sub: true, pare: "inici", titol: "Assistent",
+    cos: h`<div class="formulari">
+      <p>Envia una foto, una captura de pantalla, un PDF o un text, i et proposaré què afegir. Per dictar, toca el micròfon del teclat.</p>
+      <div class="camp"><label for="as-text">Què vols afegir? <span class="ajuda">(opcional si hi poses una imatge)</span></label>
+        <textarea id="as-text" maxlength="4000" placeholder="Per exemple: el dijous la Bruna té metge a les 5 i mitja">${asText}</textarea></div>
+      <div class="graella2">
+        <label class="boto" for="as-camera">${svg('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>')}Foto</label>
+        <label class="boto" for="as-fitxers">${svg('<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 17l-5-5-9 8"/>')}Imatges o PDF</label>
+      </div>
+      <input id="as-camera" class="oculta" type="file" accept="image/*" capture="environment" data-accio="as-fitxer">
+      <input id="as-fitxers" class="oculta" type="file" accept="image/*,application/pdf" multiple data-accio="as-fitxer">
+      ${asFitxers.length ? h`<div class="xips">${asFitxers.map((f, i) => h`<span class="xip" style="padding:4px 4px 4px 4px;gap:8px">
+        ${f.vista ? h`<img src="${f.vista}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px">` : h`<b style="padding:0 6px">PDF</b>`}
+        <span style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.nom}</span>
+        <button class="icona-boto" style="width:40px;height:40px" data-accio="as-treu" data-i="${i}" aria-label="Treu ${f.nom}">${I.creu}</button></span>`)}</div>` : ""}
+      <button class="boto primari ample" data-accio="as-interpreta" ${asCarregant ? raw("disabled") : ""}>${asCarregant ? "Llegint…" : "Interpreta"}</button>
+      ${MODE_PROVA ? h`<p class="buit" style="font-size:.85rem;padding:0">Mode prova: la resposta és un exemple fix, no es llegeix el que envies.</p>` : ""}
+      ${resultat}
+    </div>`,
+    despres: () => { $("#as-text").oninput = (ev) => { asText = ev.target.value; }; },
+  };
+}
+
+// =============================================================
 // 12 · Menú ⋮ (estil WhatsApp)
 // =============================================================
 function pantMenu() {
@@ -1090,7 +1215,7 @@ function pantTriaPersona() {
 }
 
 const PANTALLES = {
-  inici: pantInici, agenda: pantAgenda, nou: pantNou, permis: pantPermis,
+  inici: pantInici, agenda: pantAgenda, nou: pantNou, permis: pantPermis, assistent: pantAssistent,
   tasques: pantTasques, tasca: pantTasca, "tasca-nova": pantTascaNova,
   compra: pantCompra, mes: pantMes, "desig-nou": pantDesigNou, "prestec-nou": pantPrestecNou,
   menu: (sub) => ({ persona: pantPersona, aspecte: pantAspecte, avisos: pantAvisos, dades: pantDades }[sub] ?? pantMenu)(),
@@ -1176,6 +1301,50 @@ const ACCIONS = {
       location.hash = "inici";
     } catch (err) { avisa(err.message); }
   },
+
+  // Assistent
+  "as-treu": (el) => { asFitxers.splice(Number(el.dataset.i), 1); render(); },
+  async "as-interpreta"() {
+    asText = $("#as-text")?.value ?? asText;
+    if (!asText.trim() && !asFitxers.length) { avisa("Escriu alguna cosa o afegeix una imatge."); return; }
+    asCarregant = true; render();
+    try {
+      const d = await Dades.Assistent.interpreta({
+        persona: jo, text: asText, avui: isoDia(new Date()),
+        membres: C.MEMBRES.map(({ id, nom, rol }) => ({ id, nom, rol })),
+        fitxers: asFitxers.map(({ media_type, data }) => ({ media_type, data })),
+      });
+      asProposta = d.proposta; asAfegits = new Set();
+      if (d.limit && d.usos >= d.limit - 3) avisa(`Et queden ${d.limit - d.usos} consultes avui.`);
+    } catch (e) { avisa(e.message); }
+    asCarregant = false; render();
+  },
+  "as-edita": (el) => { nouOrigen = { index: Number(el.dataset.i) }; const e = asProposta.esdeveniments[nouOrigen.index]; location.hash = `nou/${e.data || isoDia(new Date())}`; },
+  async "as-afegeix-esdev"(el) {
+    const i = Number(el.dataset.i);
+    el.disabled = true;
+    try { await Agenda.crea(esdevDeProposta(asProposta.esdeveniments[i])); asAfegits.add("e" + i); avisa("Afegit a l'agenda."); }
+    catch (e) { avisa(e.message); }
+    render();
+  },
+  "as-afegeix-compra": () => {
+    const triats = [...document.querySelectorAll(".as-compra:checked")].map((x) => asProposta.compra[Number(x.dataset.i)]);
+    for (const c of triats) Col.afegeix("compra", { nom: c.nom, quantitat: c.quantitat, comprat: false, quan: new Date().toISOString(), qui: jo });
+    asAfegits.add("compra");
+    avisa(`${plural(triats.length, "cosa afegida", "coses afegides")} a la compra.`);
+    render();
+  },
+  "as-afegeix-tasca": (el) => {
+    const i = Number(el.dataset.i), t = asProposta.tasques[i];
+    const base = { nom: t.nom, tipus: t.tipus, creada: new Date().toISOString(), fetes: [] };
+    if (t.tipus === "recurrent") base.cada = Math.max(1, t.cada_dies || 7);
+    else base.limit = t.data_limit || isoDia(sumaDies(avui(), 7));
+    Col.afegeix("tasques", base);
+    asAfegits.add("t" + i);
+    avisa("Tasca afegida.");
+    render();
+  },
+  "as-nou": () => { asText = ""; asFitxers = []; asProposta = null; asAfegits = new Set(); render(); },
 
   // Tasques
   "tasca-agafa": (el) => {
@@ -1332,8 +1501,17 @@ document.addEventListener("click", (ev) => {
   if (el.tagName !== "A") ev.preventDefault();
   f(el, ev);
 });
-document.addEventListener("change", (ev) => {
+document.addEventListener("change", async (ev) => {
   const el = ev.target;
+  if (el.dataset.accio === "as-fitxer" && el.files.length) {
+    for (const f of [...el.files].slice(0, 4 - asFitxers.length)) {
+      try { asFitxers.push(await preparaFitxer(f)); } catch (e) { avisa(e.message); }
+    }
+    if (el.files.length + asFitxers.length > 4) avisa("Com a màxim 4 fitxers.");
+    el.value = "";
+    render();
+    return;
+  }
   if (el.dataset.accio === "compra-marca" || el.dataset.accio === "daltonics") ACCIONS[el.dataset.accio](el);
   if (el.dataset.accio === "importa" && el.files[0]) {
     el.files[0].text().then((t) => { Col.importa(JSON.parse(t)); avisa("Còpia recuperada."); vesA("inici"); })

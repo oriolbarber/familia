@@ -7,3 +7,6 @@ verify_jwt = false
 
 [functions.push-prova]
 verify_jwt = false
+
+[functions.assistent]
+verify_jwt = false

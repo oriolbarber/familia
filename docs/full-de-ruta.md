@@ -73,3 +73,12 @@ Cada etapa és **un xat** (prompt a `docs/xats/`). No es comença la següent fi
 - [ ] Tasca programada + Edge Function de resum per persona
 - [ ] Push web; pla B per correu
 - [ ] Prova a casa 2 setmanes
+
+## 8 · Fase F · Assistent (avançada el 20 de novembre)
+
+- [x] Funció `assistent` (Claude Haiku 5.5, sortida estructurada, límit diari, registre d'usos)
+- [x] Pantalla «Assistent»: foto, imatges, PDF, text; propostes amb Afegeix / Edita
+- [ ] Compte d'Anthropic, crèdit, límit de 2 $/mes i secret `ANTHROPIC_API_KEY` (Oriol, guia pas 9)
+- [ ] Taula `assistent_usos` i desplegament de la funció (guia pas 9)
+- [ ] Provar-ho amb fotos reals (circulars, WhatsApp, llistes a mà)
+- [ ] Més endavant: compartir des de la galeria a Android (Web Share Target)

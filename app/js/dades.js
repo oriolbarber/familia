@@ -174,6 +174,29 @@
   function fiReal(e) { return e.totElDia ? e.fi + "T00:00" : e.fi; }
 
   // =============================================================
+  // Assistent (funció «assistent» → Claude Haiku 5.5)
+  // =============================================================
+  const Assistent = {
+    async interpreta(cos) {
+      if (!MODE_PROVA) return crida("assistent", { metode: "POST", cos });
+      // Mode prova: resposta d'exemple fixa, per veure com funciona la pantalla
+      await new Promise((r) => setTimeout(r, 700));
+      const dj = new Date(); dj.setDate(dj.getDate() + ((4 - dj.getDay() + 7) % 7 || 7));
+      const jove = C.MEMBRES.find((m) => m.rol === "jove")?.id ?? "";
+      return {
+        usos: 1, limit: 20,
+        proposta: {
+          resum: "(Exemple) He trobat una cita al dentista, tres coses per comprar i una tasca.",
+          esdeveniments: [{ titol: "Revisió al dentista", data: isoDia(dj), data_fi: "", hora_inici: "17:30", hora_fi: "18:00", lloc: "Clínica dental", persona: jove, nota: "Portar la targeta sanitària" }],
+          compra: [{ nom: "Llet", quantitat: "6" }, { nom: "Pa de motlle", quantitat: "" }, { nom: "Tomàquets", quantitat: "1 kg" }],
+          tasques: [{ nom: "Portar l'autorització signada a l'escola", tipus: "puntual", cada_dies: 0, data_limit: isoDia(new Date(dj.getTime() - DIA)) }],
+          dubtes: ["No diu a quina hora acaba la cita; he posat mitja hora."],
+        },
+      };
+    },
+  };
+
+  // =============================================================
   // Col·leccions (de moment, en aquest navegador)
   // =============================================================
   const COLS = ["tasques", "compra", "desitjos", "prestecs", "historial"];
@@ -208,5 +231,5 @@
     local.esborra("prova:llavor");
   }
 
-  window.Dades = { MODE_PROVA, local, crida, Agenda, Col, isoDia, iniReal, fiReal, DIA };
+  window.Dades = { MODE_PROVA, local, crida, Agenda, Col, Assistent, isoDia, iniReal, fiReal, DIA };
 })();

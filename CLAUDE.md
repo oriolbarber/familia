@@ -15,10 +15,11 @@ Especificació completa: `docs/proposta-v2.md`. Estat i fases: `docs/full-de-rut
 | Agenda | Google Calendar API, calendari compartit de la família **"GLOB"**, via **compte de servei** cridat des d'una Edge Function. Els usuaris **no** entren amb Google |
 | Lògica de servidor | Supabase Edge Functions + tasca programada (`supabase/functions/`) |
 | Allotjament | GitHub Pages (HTTPS) |
+| Assistent | Funció `assistent` → Claude Haiku 5.5 (API d'Anthropic, clau com a secret `ANTHROPIC_API_KEY`); només proposa, l'usuari confirma |
 | Instal·lació | `manifest.webmanifest` + `sw.js` (pantalla d'inici i ús sense connexió) |
 
 - Google Calendar és la **font única** de l'agenda. Supabase només desa el que Google no sap: persona propietària, estat d'autorització, historial de rebutjades.
-- La clau del compte de servei i la `service_role` de Supabase **mai** al client ni al repositori: només com a secrets de les Edge Functions.
+- La clau del compte de servei, la clau d'Anthropic i la `service_role` de Supabase **mai** al client ni al repositori: només com a secrets de les Edge Functions.
 - La clau `anon` de Supabase sí que pot anar al client; la seguretat la fa l'RLS.
 - `app/js/dades.js` és l'única capa que parla amb Google/Supabase; sense Supabase configurat l'app va en **mode prova** amb dades d'exemple.
 - Sense connexió: la PWA mostra l'última còpia desada (IndexedDB) i envia els canvis en recuperar la xarxa.

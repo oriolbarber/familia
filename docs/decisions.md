@@ -48,6 +48,7 @@ Format: data · decisió · motiu · estat (vigent / pendent de confirmar / subs
 | 2026-11-20 | Les persones triades a l'app (també «tothom») tenen prioritat sobre les deduïdes pel títol | L'assignació manual mana | Vigent |
 | 2026-11-20 | Els punts de la tira de dies i del mes mostren els colors de totes les persones de la cita (sectors) | Comentari de l'Oriol | Vigent |
 | 2026-11-20 | La funció `calendar` informa de la seva versió (`versio: 2`); amb una funció antiga l'app no deixa editar i avisa | Evitar que una funció antiga interpreti una edició com un permís (afegiria «[Pendent]» al títol) | Vigent |
+| 2026-11-21 | De moment l'app llegeix el calendari provisional **«AppFamila»** (còpia de GLOB del 20/11). Les dates de l'institut de l'Oriol són a tots dos. Es passarà a GLOB quan l'Oriol tingui el PC | Provar sense tocar el calendari de la Laura | Provisional |
 
 ## Per què el compte de servei (xat 01)
 

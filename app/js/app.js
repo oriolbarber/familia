@@ -308,7 +308,7 @@ async function pantAgenda() {
   const filtres = h`<div class="xips" role="group" aria-label="Filtre" style="margin-top:10px">
     <button class="xip" data-accio="ag-filtre" data-f="meu" aria-pressed="${ag.filtre === "meu"}">El meu</button>
     <button class="xip" data-accio="ag-filtre" data-f="tothom" aria-pressed="${ag.filtre === "tothom"}">Tothom</button>
-    ${C.MEMBRES.filter((m) => m.id !== jo).map((m) => h`<button class="xip amb-inicial" data-accio="ag-filtre" data-f="${m.id}" aria-pressed="${ag.filtre === m.id}" aria-label="${m.nom}">${inicial(m.id, "petita")}</button>`)}
+    ${C.MEMBRES.filter((m) => m.id !== jo).map((m) => h`<button class="xip amb-inicial sols" data-accio="ag-filtre" data-f="${m.id}" aria-pressed="${ag.filtre === m.id}" aria-label="${m.nom}">${inicial(m.id, "petita")}</button>`)}
   </div>`;
   const avisDesat = r.error
     ? h`<p class="avis-caixa" style="margin-top:10px">${r.desada ? `Sense connexió: còpia de ${fHora.format(new Date(r.quan))}.` : `No s'ha pogut llegir el calendari: ${r.error}`}</p>`
@@ -745,7 +745,7 @@ function pantTasques() {
   const fetes = visibles.filter((t) => t.feta);
   const filtres = h`<div class="xips" role="group" aria-label="Filtre" style="margin-bottom:12px">
     ${[["meu", "Les meves"], ["tothom", "Tothom"], ["lliures", "Lliures"]].map(([f, t]) => h`<button class="xip" data-accio="tasques-filtre" data-f="${f}" aria-pressed="${filtreTasques === f}">${t}</button>`)}
-    ${C.MEMBRES.filter((m) => m.id !== jo).map((m) => h`<button class="xip amb-inicial" data-accio="tasques-filtre" data-f="${m.id}" aria-pressed="${filtreTasques === m.id}" aria-label="${m.nom}">${inicial(m.id, "petita")}</button>`)}
+    ${C.MEMBRES.filter((m) => m.id !== jo).map((m) => h`<button class="xip amb-inicial sols" data-accio="tasques-filtre" data-f="${m.id}" aria-pressed="${filtreTasques === m.id}" aria-label="${m.nom}">${inicial(m.id, "petita")}</button>`)}
   </div>`;
   const textBuit = { meu: "No tens cap tasca pendent.", tothom: "No hi ha tasques.", lliures: "No hi ha tasques lliures." }[filtreTasques] ?? `${nom(filtreTasques)} no té cap tasca.`;
   return {

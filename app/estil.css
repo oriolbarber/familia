@@ -75,11 +75,11 @@ h1, h2, h3, p { margin: 0; }
 .barra {
   position: sticky; top: 0; z-index: 5; background: var(--fons);
   display: flex; align-items: center; gap: 4px;
-  width: 100%; max-width: 720px; margin: 0 auto; padding: 6px 4px 6px 16px;
+  width: 100%; max-width: 720px; margin: 0 auto; padding: 2px 4px 2px 16px;
 }
 .barra .icona-boto { width: 44px; height: 44px; border-radius: 22px; }
 .barra .titol { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-.barra .titol b { font-size: 1.3rem; line-height: 1.15; }
+.barra .titol b { font-size: 1.2rem; line-height: 1.15; }
 .barra .titol span { color: var(--suau); font-size: .85rem; line-height: 1.25; }
 .barra.sub {
   display: grid; grid-template-columns: 48px 1fr 48px; padding: 4px;
@@ -186,6 +186,7 @@ h2 .punt-avis { top: -4px; right: -8px; }
   display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: .9rem;
 }
 .xip.amb-inicial { padding: 0 10px 0 4px; }
+.xip.sols { width: 44px; padding: 0; justify-content: center; }
 .xip[aria-pressed="true"] { background: var(--text); color: var(--fons); border-color: var(--text); font-weight: 700; }
 .tria-persona { width: 56px; height: 56px; border-radius: 50%; border: none; color: #fff; font-weight: 700; cursor: pointer; opacity: .35; }
 .tria-persona[aria-pressed="true"] { opacity: 1; outline: 3px solid var(--text); outline-offset: 2px; }

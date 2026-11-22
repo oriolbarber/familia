@@ -260,7 +260,7 @@ async function pantInici() {
     ? h`<section class="ara">
         <span class="rotul">${primer.totElDia ? "AVUI" : new Date(primer.inici) <= ara ? "ARA" : "ARA VE"}</span>
         <button data-accio="detall" data-id="${primer.id}" class="gran" style="all:unset;cursor:pointer;font-size:1.65rem;font-weight:700;line-height:1.15">${primer.titol}</button>
-        <div class="fila">${inicialsDe(primer, "petita")}<span>${nomsDe(primer)} · ${horaDe(primer)}${primer.totElDia ? "" : " · " + quanFalta(primer, ara)}</span></div>
+        <div class="fila">${inicialsDe(primer, "petita")}<span>${nomsDe(primer)} · ${horaDe(primer)}${primer.totElDia ? "" : h` · <span class="falta" data-inici="${primer.inici}">${quanFalta(primer, ara)}</span>`}</span></div>
         ${resta.length ? h`<div class="resta">${resta.slice(0, 4).map((e) => h`<span>${horaDe(e)} · ${e.titol} (${nomsDe(e)})</span>`)}${resta.length > 4 ? h`<span>i ${resta.length - 4} més…</span>` : ""}</div>` : ""}
       </section>`
     : h`<section class="ara"><span class="rotul">AVUI</span><span class="gran">Res més previst</span><a href="#agenda" style="color:inherit;font-weight:700">Mira l'agenda</a></section>`;
@@ -1767,6 +1767,15 @@ document.addEventListener("keydown", (ev) => {
 window.addEventListener("hashchange", () => { sessionStorage.setItem("dins", "1"); render(); });
 window.addEventListener("online", render);
 aplicaAspecte();
+// L'Inici es manté al dia: «d'aquí a…» cada minut, i tot de nou en tornar a l'app
+setInterval(() => {
+  document.querySelectorAll(".falta[data-inici]").forEach((el) => { el.textContent = quanFalta({ inici: el.dataset.inici }, new Date()); });
+}, 60e3);
+document.addEventListener("visibilitychange", () => {
+  const ruta = location.hash.slice(1).split("/")[0] || "inici";
+  if (document.visibilityState === "visible" && ruta === "inici" && !document.querySelector("dialog[open]")) render();
+});
+
 // Actualització: es busca versió nova en obrir l'app o tornar-hi, i quan n'hi ha es recarrega sola
 if ("serviceWorker" in navigator) {
   const teniaControl = !!navigator.serviceWorker.controller;
@@ -1776,7 +1785,7 @@ if ("serviceWorker" in navigator) {
     recarregant = true; location.reload();
   });
   navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then((reg) => {
-    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") reg.update().catch(() => {}); });
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") reg?.update?.().catch(() => {}); });
   });
 }
 render();

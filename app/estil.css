@@ -372,3 +372,69 @@ details[open] > summary::before { transform: rotate(90deg); }
   .horari { max-height: calc(100dvh - 300px); }
   .bloc, .bloc-tot { font-size: .78rem; }
 }
+
+/* ---------- Agenda: filtre a la capçalera ---------- */
+.filtre-cap { position: relative; flex: none; }
+.filtre-boto {
+  min-height: 44px; min-width: 44px; padding: 0 6px 0 5px; border-radius: 22px; border: 1px solid var(--vora); background: var(--sup);
+  color: var(--text); display: inline-flex; align-items: center; gap: 2px; cursor: pointer;
+}
+.filtre-boto svg { width: 18px; height: 18px; }
+.filtre-boto[aria-expanded="true"] { border-color: var(--primari); box-shadow: 0 0 0 2px var(--primari-suau); }
+.desplegable {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 10; width: max-content; min-width: 210px; max-width: 80vw;
+  background: var(--sup); border: 1px solid var(--linia); border-radius: 16px; box-shadow: var(--ombra); overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.desplegable button {
+  min-height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 14px; border: none; border-bottom: 1px solid var(--linia);
+  background: none; color: var(--text); text-align: left; cursor: pointer; font-size: 1rem;
+}
+.desplegable button:last-child { border-bottom: none; }
+.desplegable button[aria-pressed="true"] { background: var(--primari-suau); color: var(--primari-fort); font-weight: 700; }
+.desplegable .marca { margin-left: auto; display: grid; color: var(--primari-fort); }
+
+/* ---------- Agenda: setmana en llista ---------- */
+.boto-horari { margin: 4px 0 6px; }
+.boto-horari svg { width: 20px; height: 20px; }
+.setmana-llista { display: flex; flex-direction: column; }
+.dia-fila { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--linia); }
+.dia-fila:last-child { border-bottom: none; }
+.dia-cap {
+  min-height: 52px; align-self: start; border: none; border-radius: 12px; background: none; color: var(--suau); cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: .78rem; line-height: 1.1;
+}
+.dia-cap b { font-size: 1.3rem; color: var(--text); }
+.dia-fila.avui .dia-cap { background: var(--primari); color: var(--primari-text); }
+.dia-fila.avui .dia-cap b { color: var(--primari-text); }
+.dia-evs { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.buit-dia { color: var(--suau); font-size: .9rem; padding: 12px 2px; }
+.dia-fila:has(.buit-dia) { padding: 4px 0; }
+.dia-fila:has(.buit-dia) .dia-cap { min-height: 44px; }
+.ev-c {
+  position: relative; overflow: hidden; min-height: 48px; width: 100%; display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px 6px 16px; border: 2px solid transparent; border-radius: 12px; background: var(--sup); color: var(--text);
+  text-align: left; cursor: pointer;
+}
+.ev-c .franja-persona { width: 6px; }
+.ev-c .hora { width: 3.1em; font-size: .9rem; }
+.ev-c b { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.ev-c.pendent { border: 2px dashed var(--avis-vora); }
+
+/* ---------- Agenda: horari a pantalla completa ---------- */
+.complet {
+  position: fixed; inset: 0; z-index: 8; background: var(--fons); display: flex; flex-direction: column;
+  padding: env(safe-area-inset-top) max(6px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(6px, env(safe-area-inset-left));
+}
+.complet-cap { display: flex; align-items: center; gap: 4px; min-height: 48px; }
+.complet-cap .setmana-nav { flex: 1; min-width: 0; }
+.complet-cap .setmana-nav b { font-size: 1rem; }
+.complet-avis { color: var(--suau); font-size: .85rem; padding: 0 8px 6px; }
+.complet .horari { flex: 1; max-height: none; min-height: 0; border-radius: 12px; }
+.complet .horari-cap span, .complet .horari-cap button { min-height: 32px; display: flex; gap: 4px; justify-content: center; align-items: baseline; padding: 4px 0; }
+.complet .horari-cap b { display: inline; }
+.complet .buit { display: none; }
+.complet .bloc { font-size: .72rem; line-height: 1.2; }
+.bloc .h { opacity: .9; font-weight: 400; }
+.complet .bloc-tot { font-size: .72rem; }
+@media (orientation: portrait) { .complet .bloc .h { display: block; } }

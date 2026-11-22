@@ -93,6 +93,8 @@ const I = {
   menu: raw('<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>'),
   enrere: svg('<path d="M19 12H5M11 6l-6 6 6 6"/>'),
   ant: svg('<path d="M15 6l-6 6 6 6"/>', 'stroke-width="2.4"'),
+  avall: svg('<path d="M6 9l6 6 6-6"/>', 'stroke-width="2.6"'),
+  ampliar: svg('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'),
   seg: svg('<path d="M9 6l6 6-6 6"/>', 'stroke-width="2.4"'),
   mes1: svg('<path d="M12 5v14M5 12h14"/>', 'stroke-width="2.6"'),
   rellotge: svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
@@ -281,7 +283,7 @@ function quanFalta(e, ara) {
 // =============================================================
 // 7 · Agenda (dia · setmana · mes)
 // =============================================================
-const ag = { vista: pref("agenda-vista", "dia"), filtre: pref("agenda-filtre", "meu"), dia: avui(), origen: null };
+const ag = { vista: pref("agenda-vista", "dia"), filtre: pref("agenda-filtre", "meu"), dia: avui(), origen: null, complet: false, senseAuto: false };
 
 function aplica(e) {
   if (ag.filtre === "tothom") return true;
@@ -305,28 +307,54 @@ async function pantAgenda() {
   const seg = h`<div class="segmentat" role="group" aria-label="Vista">
     ${[["dia", "Dia"], ["setmana", "Setmana"], ["mes", "Mes"]].map(([v, t]) => h`<button data-accio="ag-vista" data-v="${v}" aria-pressed="${ag.vista === v}">${t}</button>`)}
   </div>`;
-  const filtres = h`<div class="xips" role="group" aria-label="Filtre" style="margin-top:10px">
-    <button class="xip" data-accio="ag-filtre" data-f="meu" aria-pressed="${ag.filtre === "meu"}">El meu</button>
-    <button class="xip" data-accio="ag-filtre" data-f="tothom" aria-pressed="${ag.filtre === "tothom"}">Tothom</button>
-    ${C.MEMBRES.filter((m) => m.id !== jo).map((m) => h`<button class="xip amb-inicial sols" data-accio="ag-filtre" data-f="${m.id}" aria-pressed="${ag.filtre === m.id}" aria-label="${m.nom}">${inicial(m.id, "petita")}</button>`)}
-  </div>`;
+  const filtre = botoFiltre();
   const avisDesat = r.error
     ? h`<p class="avis-caixa" style="margin-top:10px">${r.desada ? `Sense connexió: còpia de ${fHora.format(new Date(r.quan))}.` : `No s'ha pogut llegir el calendari: ${r.error}`}</p>`
     : "";
 
+  // Horari setmanal a pantalla completa (botó o mòbil girat)
+  if (ag.vista === "setmana" && (ag.complet || horitzontal())) {
+    const { cos, despres } = vistaSetmana(llista, des, true);
+    return {
+      tab: "agenda", titol: "Agenda", senseBarra: true, senseNav: true, despres,
+      cos: h`<div class="complet">
+        <div class="complet-cap">
+          <button class="icona-boto" data-accio="ag-complet-surt" aria-label="Surt de la pantalla completa">${I.creu}</button>
+          ${navSetmana(des, textSetmana(des))}${filtre}
+        </div>
+        ${matchMedia("(orientation: portrait)").matches ? h`<p class="complet-avis">Gira el mòbil per veure l'horari més ample.</p>` : ""}
+        ${avisDesat}${cos}
+      </div>`,
+    };
+  }
+
   let cos, despres;
   if (ag.vista === "mes") cos = vistaMes(llista);
-  else if (ag.vista === "setmana") ({ cos, despres } = vistaSetmana(llista, des));
+  else if (ag.vista === "setmana") cos = vistaSetmanaLlista(llista, des);
   else cos = vistaDia(llista, des);
 
   return {
     tab: "agenda", titol: "Agenda",
-    dreta: h`<a class="icona-boto" href="#assistent" aria-label="Assistent">${I.assistent}</a>`,
-    cos: h`${ag.origen ? h`<button class="boto petit torna-dia" data-accio="ag-torna">${I.ant}Torna ${ag.origen === "mes" ? "al mes" : "a la setmana"}</button>` : seg}${filtres}${avisDesat}<div style="margin-top:12px">${cos}</div>
+    dreta: h`${filtre}<a class="icona-boto" href="#assistent" aria-label="Assistent">${I.assistent}</a>`,
+    cos: h`${ag.origen ? h`<button class="boto petit torna-dia" data-accio="ag-torna">${I.ant}Torna ${ag.origen === "mes" ? "al mes" : "a la setmana"}</button>` : seg}${avisDesat}<div style="margin-top:12px">${cos}</div>
       <a class="fab" href="#nou/${isoDia(ag.dia)}">${I.mes1}Nou</a>`,
     despres,
   };
 }
+
+// Filtre de l'agenda: botó amb la icona del filtre actual i desplegable
+function botoFiltre() {
+  const opcions = [["meu", "El meu", inicial(jo, "petita")], ["tothom", "Tothom", inicial(null, "petita")],
+    ...C.MEMBRES.filter((m) => m.id !== jo).map((m) => [m.id, m.nom, inicial(m.id, "petita")])];
+  const actual = opcions.find(([f]) => f === ag.filtre) ?? opcions[1];
+  return h`<div class="filtre-cap">
+    <button class="filtre-boto" data-accio="ag-filtre-obre" aria-haspopup="true" aria-expanded="false" aria-label="Mostra: ${actual[1]}">${actual[2]}${I.avall}</button>
+    <div class="desplegable" hidden role="group" aria-label="Què es mostra">
+      ${opcions.map(([f, t, ic]) => h`<button data-accio="ag-filtre" data-f="${f}" aria-pressed="${ag.filtre === f}">${ic}<span>${t}</span>${ag.filtre === f ? h`<span class="marca">${I.ok}</span>` : ""}</button>`)}
+    </div>
+  </div>`;
+}
+const horitzontal = () => !ag.senseAuto && matchMedia("(orientation: landscape) and (max-height: 520px)").matches;
 
 function navSetmana(des, text) {
   return h`<div class="setmana-nav">
@@ -362,8 +390,31 @@ function vistaDia(llista, des) {
     </div>`;
 }
 
+function vistaSetmanaLlista(llista, des) {
+  const dies = Array.from({ length: 7 }, (_, i) => sumaDies(des, i));
+  const ordre = (e) => (e.totElDia ? 0 : new Date(e.inici).getTime());
+  return h`${navSetmana(des, textSetmana(des))}
+    <button class="boto petit ample boto-horari" data-accio="ag-complet">${I.ampliar}Horari setmanal</button>
+    <div class="setmana-llista">${dies.map((d, i) => {
+      const evs = delDia(llista, d).sort((a, b) => ordre(a) - ordre(b));
+      return h`<div class="dia-fila ${mateixDia(d, avui()) ? "avui" : ""}">
+        <button class="dia-cap" data-accio="mes-dia" data-dia="${isoDia(d)}" aria-label="Obre ${fDiaLlarg.format(d)}">${DIES_CURTS[i]}<b>${d.getDate()}</b></button>
+        <div class="dia-evs">${evs.length ? evs.map((e) => elemCompacte(e, d)) : h`<span class="buit-dia">Res previst</span>`}</div>
+      </div>`;
+    })}</div>`;
+}
+function elemCompacte(e, dia) {
+  const pendent = e.permis?.estat === "pendent";
+  return h`<button class="ev-c ${pendent ? "pendent" : ""}" data-accio="detall" data-id="${e.id}" aria-label="${e.titol}, ${horaDe(e, dia)}, ${nomsDe(e)}${pendent ? ", pendent de permís" : ""}">
+    <span class="franja-persona" style="background:${pers(e).length ? fonsDe(e) : "var(--vora)"}" aria-hidden="true"></span>
+    <span class="hora">${e.totElDia ? "Tot" : horaDe(e, dia)}</span>${inicialsDe(e, "petita")}<b>${e.titol}</b>
+  </button>`;
+}
+
 const HORA_INI = 7, HORA_FI = 24, ALT = 40;
-function vistaSetmana(llista, des) {
+function vistaSetmana(llista, des, complet = false) {
+  // A pantalla completa, l'alçada de cada hora s'ajusta perquè hi càpiga el dia sencer
+  const A = complet ? Math.max(16, Math.floor((innerHeight - 120) / (HORA_FI - HORA_INI))) : ALT;
   const dies = Array.from({ length: 7 }, (_, i) => sumaDies(des, i));
   const totElDia = (d) => delDia(llista, d).filter((e) => e.totElDia);
   const blocs = (d) => {
@@ -379,28 +430,27 @@ function vistaSetmana(llista, des) {
     });
     const n = Math.max(1, carrils.length);
     return pos.map(({ e, ini, fi, c }) => {
-      const top = Math.max(0, (ini - d.getTime()) / 36e5 - HORA_INI) * ALT;
-      const alt = Math.max(ALT * 0.6, ((fi - ini) / 36e5) * ALT - 2);
+      const top = Math.max(0, (ini - d.getTime()) / 36e5 - HORA_INI) * A;
+      const alt = Math.max(A * 0.6, ((fi - ini) / 36e5) * A - 2);
       const pend = e.permis?.estat === "pendent";
       return h`<button class="bloc ${pend ? "pendent" : ""}" data-accio="detall" data-id="${e.id}"
         style="top:${top}px;height:${alt}px;left:calc(${(c / n) * 100}% + 1px);width:calc(${100 / n}% - 2px);background:${fonsDe(e, "135deg")}"
-        aria-label="${e.titol}, ${horaDe(e, d)}, ${nomsDe(e)}"><span class="ini">${inicialsText(e)}</span> ${e.titol}</button>`;
+        aria-label="${e.titol}, ${horaDe(e, d)}, ${nomsDe(e)}"><span class="ini">${inicialsText(e)}</span> ${e.titol} <span class="h">${horaDe(e, d)}</span></button>`;
     });
   };
   const hores = Array.from({ length: HORA_FI - HORA_INI }, (_, i) => HORA_INI + i);
-  const cos = h`${navSetmana(des, textSetmana(des))}
-    <div class="horari" id="horari" style="--h:${ALT}px;margin-top:8px">
+  const cos = h`<div class="horari" id="horari" style="--h:${A}px">
       <div class="horari-cap"><span></span>${dies.map((d, i) => h`<button data-accio="mes-dia" data-dia="${isoDia(d)}" class="${mateixDia(d, avui()) ? "avui" : ""}" aria-label="Obre ${fDiaLlarg.format(d)}">${DIES_CURTS[i]}<b>${d.getDate()}</b></button>`)}</div>
       <div class="horari-tot"><span></span>${dies.map((d) => h`<div>${totElDia(d).map((e) => h`<button class="bloc-tot" data-accio="detall" data-id="${e.id}" style="background:${fonsDe(e, "90deg")}"><span class="ini">${inicialsText(e)}</span> ${e.titol}</button>`)}</div>`)}</div>
       <div class="horari-cos">
         <div class="horari-hores">${hores.map((x) => h`<span>${x}</span>`)}</div>
-        ${dies.map((d) => h`<div class="horari-col" style="height:${hores.length * ALT}px">${blocs(d)}</div>`)}
+        ${dies.map((d) => h`<div class="horari-col" style="height:${hores.length * A}px">${blocs(d)}</div>`)}
       </div>
     </div>
-    <p class="buit" style="font-size:.85rem">Toca un dia per obrir-lo o un bloc per veure'n els detalls. Amb el mòbil girat es veu més ample.</p>`;
+    <p class="buit" style="font-size:.8rem;padding:4px">Toca un dia per obrir-lo o un bloc per veure'n els detalls.</p>`;
   const despres = () => {
     const el = $("#horari");
-    if (el && dies.some((d) => mateixDia(d, avui()))) el.scrollTop = Math.max(0, (new Date().getHours() - HORA_INI - 1) * ALT);
+    if (el && dies.some((d) => mateixDia(d, avui()))) el.scrollTop = Math.max(0, (new Date().getHours() - HORA_INI - 1) * A);
   };
   return { cos, despres };
 }
@@ -1364,6 +1414,13 @@ const ACCIONS = {
 
   // Agenda
   "ag-vista": (el) => { ag.origen = null; ag.vista = el.dataset.v; desaPref("agenda-vista", ag.vista); render(); },
+  "ag-filtre-obre": (el) => obreFiltre(el, el.getAttribute("aria-expanded") !== "true"),
+  "ag-complet": () => {
+    ag.complet = true; history.pushState({ agComplet: 1 }, "");
+    document.documentElement.requestFullscreen?.().then(() => screen.orientation?.lock?.("landscape")).catch(() => {});
+    render();
+  },
+  "ag-complet-surt": () => { if (history.state?.agComplet) history.back(); else surtComplet(); },
   "ag-filtre": (el) => { ag.filtre = el.dataset.f; desaPref("agenda-filtre", ag.filtre); render(); },
   "ag-dia": (el) => { ag.dia = dataDe(el.dataset.dia); render(); },
   "ag-moure": (el) => {
@@ -1675,7 +1732,34 @@ document.addEventListener("change", async (ev) => {
 // 15 · Inici de l'app
 // =============================================================
 function tornaDeDia() { if (!ag.origen) return; ag.vista = ag.origen; ag.origen = null; render(); }
-window.addEventListener("popstate", () => { if (ag.origen && location.hash.startsWith("#agenda")) tornaDeDia(); });
+function surtComplet() {
+  ag.complet = false;
+  if (horitzontal()) ag.senseAuto = true; // si el mòbil és girat, no hi tornis a entrar sol
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  try { screen.orientation?.unlock?.(); } catch { /* res */ }
+  render();
+}
+window.addEventListener("popstate", () => {
+  if (!location.hash.startsWith("#agenda")) return;
+  if (ag.origen) tornaDeDia(); else if (ag.complet) surtComplet();
+});
+matchMedia("(orientation: landscape)").addEventListener("change", (ev) => {
+  if (!ev.matches) ag.senseAuto = false;
+  if (location.hash.startsWith("#agenda") && ag.vista === "setmana") render();
+});
+// Desplegable del filtre: s'obre i es tanca amb un toc; fora o amb Esc es tanca
+function obreFiltre(boto, obre) {
+  const d = boto?.nextElementSibling;
+  if (!d) return;
+  d.hidden = !obre; boto.setAttribute("aria-expanded", String(obre));
+  if (obre) d.querySelector("[aria-pressed=true]")?.focus();
+}
+document.addEventListener("click", (ev) => {
+  if (!ev.target.closest(".filtre-cap")) document.querySelectorAll(".filtre-boto[aria-expanded=true]").forEach((b) => obreFiltre(b, false));
+});
+document.addEventListener("keydown", (ev) => {
+  if (ev.key === "Escape") document.querySelectorAll(".filtre-boto[aria-expanded=true]").forEach((b) => { obreFiltre(b, false); b.focus(); });
+});
 window.addEventListener("hashchange", () => { sessionStorage.setItem("dins", "1"); render(); });
 window.addEventListener("online", render);
 aplicaAspecte();

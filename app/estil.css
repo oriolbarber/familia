@@ -433,3 +433,8 @@ details[open] > summary::before { transform: rotate(90deg); }
 .complet .bloc-tot { font-size: .72rem; }
 @media (orientation: portrait) { .complet .bloc .h { display: block; } }
 .versio { color: var(--suau); font-size: .8rem; text-align: center; }
+/* Mes: els esdeveniments que no caben com a pastilla, com a franges de color */
+.franges-mes { display: flex; flex-direction: column; gap: 2px; padding: 1px 2px 0; }
+.franges-mes i { display: block; height: 5px; border-radius: 3px; font-size: 0; font-style: normal; overflow: hidden; }
+.franges-mes i.pendent { background-image: repeating-linear-gradient(90deg, rgb(255 255 255 / .45) 0 3px, transparent 3px 6px) !important; }
+html[data-daltonics] .franges-mes i { height: 11px; font-size: .5rem; line-height: 11px; color: #fff; font-weight: 700; padding-left: 3px; }

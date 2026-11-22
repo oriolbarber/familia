@@ -472,7 +472,8 @@ function vistaMes(llista) {
       return h`<button data-accio="mes-dia" data-dia="${isoDia(d)}" class="${d.getMonth() !== primer.getMonth() ? "fora" : ""} ${mateixDia(d, avui()) ? "avui" : ""}" aria-label="${fDiaLlarg.format(d)}, ${plural(evs.length, "cosa", "coses")}">
         <b>${d.getDate()}</b>
         ${evs.slice(0, 2).map((e) => h`<span class="pastilla ${e.permis?.estat === "pendent" ? "pendent" : ""}" style="background:${fonsDe(e, "90deg")}"><span class="ini">${inicialsText(e)}</span>${e.titol}</span>`)}
-        ${evs.length > 2 ? h`<span class="mes-n">+${evs.length - 2}</span>` : ""}
+        ${evs.length > 2 ? h`<span class="franges-mes" aria-hidden="true">${evs.slice(2, 6).map((e) => h`<i class="${e.permis?.estat === "pendent" ? "pendent" : ""}" style="background:${fonsDe(e, "90deg")}">${inicialsText(e)}</i>`)}</span>` : ""}
+        ${evs.length > 6 ? h`<span class="mes-n">+${evs.length - 6}</span>` : ""}
       </button>`;
     })}</div>
     <p class="buit" style="font-size:.85rem">Toca un dia per obrir-lo.</p>`;

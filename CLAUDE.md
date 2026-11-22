@@ -12,7 +12,7 @@ Especificació completa: `docs/proposta-v2.md`. Estat i fases: `docs/full-de-rut
 |---|---|
 | Interfície | HTML/CSS/JS **sense framework**, mòbil primer (`app/`) |
 | Dades i usuaris | Supabase (Postgres + Auth + RLS) (`supabase/migrations/`) |
-| Agenda | Google Calendar API, calendari compartit de la família **"GLOB"**, via **compte de servei** cridat des d'una Edge Function. Els usuaris **no** entren amb Google |
+| Agenda | Google Calendar API, calendari compartit de la família **"GLOB"** (provisionalment «AppFamila», una còpia; vegeu `docs/decisions.md`), via **compte de servei** cridat des d'una Edge Function. Els usuaris **no** entren amb Google |
 | Lògica de servidor | Supabase Edge Functions + tasca programada (`supabase/functions/`) |
 | Allotjament | GitHub Pages (HTTPS) |
 | Assistent | Funció `assistent` → Claude Haiku 5.5 (API d'Anthropic, clau com a secret `ANTHROPIC_API_KEY`); només proposa, l'usuari confirma |

@@ -281,7 +281,7 @@ function quanFalta(e, ara) {
 // =============================================================
 // 7 · Agenda (dia · setmana · mes)
 // =============================================================
-const ag = { vista: pref("agenda-vista", "dia"), filtre: pref("agenda-filtre", "meu"), dia: avui() };
+const ag = { vista: pref("agenda-vista", "dia"), filtre: pref("agenda-filtre", "meu"), dia: avui(), origen: null };
 
 function aplica(e) {
   if (ag.filtre === "tothom") return true;
@@ -322,7 +322,7 @@ async function pantAgenda() {
   return {
     tab: "agenda", titol: "Agenda",
     dreta: h`<a class="icona-boto" href="#assistent" aria-label="Assistent">${I.assistent}</a>`,
-    cos: h`${seg}${filtres}${avisDesat}<div style="margin-top:12px">${cos}</div>
+    cos: h`${ag.origen ? h`<button class="boto petit torna-dia" data-accio="ag-torna">${I.ant}Torna ${ag.origen === "mes" ? "al mes" : "a la setmana"}</button>` : seg}${filtres}${avisDesat}<div style="margin-top:12px">${cos}</div>
       <a class="fab" href="#nou/${isoDia(ag.dia)}">${I.mes1}Nou</a>`,
     despres,
   };
@@ -357,7 +357,7 @@ function vistaDia(llista, des) {
   return h`${navSetmana(des, textSetmana(des))}
     <div class="dies">${dies.map((d, i) => h`<button data-accio="ag-dia" data-dia="${isoDia(d)}" aria-pressed="${mateixDia(d, ag.dia)}" class="${mateixDia(d, avui()) ? "avui" : ""}" aria-label="${fDiaLlarg.format(d)}">
       ${DIES_CURTS[i]}<b>${d.getDate()}</b><span class="punts-dia">${delDia(llista, d).slice(0, 3).map((e) => h`<i style="background:${puntDe(e)}"></i>`)}</span></button>`)}</div>
-    <div class="seccio"><span class="etiqueta-seccio" style="margin-top:0">${mateixDia(ag.dia, avui()) ? "Avui · " : ""}${majuscula(fDiaLlarg.format(ag.dia))}</span>
+    <div class="seccio"><h2 class="titol-dia">${mateixDia(ag.dia, avui()) ? h`<span class="avui-etiq">Avui</span>` : ""}${majuscula(fDiaLlarg.format(ag.dia))}</h2>
       ${delSeleccionat.length ? delSeleccionat.map((e) => elemEsdev(e, ag.dia)) : h`<p class="buit">Res previst.</p>`}
     </div>`;
 }
@@ -390,14 +390,14 @@ function vistaSetmana(llista, des) {
   const hores = Array.from({ length: HORA_FI - HORA_INI }, (_, i) => HORA_INI + i);
   const cos = h`${navSetmana(des, textSetmana(des))}
     <div class="horari" id="horari" style="--h:${ALT}px;margin-top:8px">
-      <div class="horari-cap"><span></span>${dies.map((d, i) => h`<span class="${mateixDia(d, avui()) ? "avui" : ""}">${DIES_CURTS[i]}<b>${d.getDate()}</b></span>`)}</div>
+      <div class="horari-cap"><span></span>${dies.map((d, i) => h`<button data-accio="mes-dia" data-dia="${isoDia(d)}" class="${mateixDia(d, avui()) ? "avui" : ""}" aria-label="Obre ${fDiaLlarg.format(d)}">${DIES_CURTS[i]}<b>${d.getDate()}</b></button>`)}</div>
       <div class="horari-tot"><span></span>${dies.map((d) => h`<div>${totElDia(d).map((e) => h`<button class="bloc-tot" data-accio="detall" data-id="${e.id}" style="background:${fonsDe(e, "90deg")}"><span class="ini">${inicialsText(e)}</span> ${e.titol}</button>`)}</div>`)}</div>
       <div class="horari-cos">
         <div class="horari-hores">${hores.map((x) => h`<span>${x}</span>`)}</div>
         ${dies.map((d) => h`<div class="horari-col" style="height:${hores.length * ALT}px">${blocs(d)}</div>`)}
       </div>
     </div>
-    <p class="buit" style="font-size:.85rem">Toca un bloc per veure'n els detalls. Amb el mòbil girat es veu més ample.</p>`;
+    <p class="buit" style="font-size:.85rem">Toca un dia per obrir-lo o un bloc per veure'n els detalls. Amb el mòbil girat es veu més ample.</p>`;
   const despres = () => {
     const el = $("#horari");
     if (el && dies.some((d) => mateixDia(d, avui()))) el.scrollTop = Math.max(0, (new Date().getHours() - HORA_INI - 1) * ALT);
@@ -421,8 +421,8 @@ function vistaMes(llista) {
       const evs = delDia(llista, d);
       return h`<button data-accio="mes-dia" data-dia="${isoDia(d)}" class="${d.getMonth() !== primer.getMonth() ? "fora" : ""} ${mateixDia(d, avui()) ? "avui" : ""}" aria-label="${fDiaLlarg.format(d)}, ${plural(evs.length, "cosa", "coses")}">
         <b>${d.getDate()}</b>
-        <span class="punts">${evs.slice(0, 4).map((e) => h`<i style="background:${puntDe(e)}">${inicialsText(e).slice(0, 2)}</i>`)}</span>
-        ${evs.length > 4 ? h`<span class="mes-n">+${evs.length - 4}</span>` : ""}
+        ${evs.slice(0, 2).map((e) => h`<span class="pastilla ${e.permis?.estat === "pendent" ? "pendent" : ""}" style="background:${fonsDe(e, "90deg")}"><span class="ini">${inicialsText(e)}</span>${e.titol}</span>`)}
+        ${evs.length > 2 ? h`<span class="mes-n">+${evs.length - 2}</span>` : ""}
       </button>`;
     })}</div>
     <p class="buit" style="font-size:.85rem">Toca un dia per obrir-lo.</p>`;
@@ -1363,7 +1363,7 @@ const ACCIONS = {
   detall: (el) => obreDetall(el.dataset.id),
 
   // Agenda
-  "ag-vista": (el) => { ag.vista = el.dataset.v; desaPref("agenda-vista", ag.vista); render(); },
+  "ag-vista": (el) => { ag.origen = null; ag.vista = el.dataset.v; desaPref("agenda-vista", ag.vista); render(); },
   "ag-filtre": (el) => { ag.filtre = el.dataset.f; desaPref("agenda-filtre", ag.filtre); render(); },
   "ag-dia": (el) => { ag.dia = dataDe(el.dataset.dia); render(); },
   "ag-moure": (el) => {
@@ -1371,7 +1371,9 @@ const ACCIONS = {
     ag.dia = ag.vista === "mes" ? new Date(ag.dia.getFullYear(), ag.dia.getMonth() + n, 1) : sumaDies(ag.dia, 7 * n);
     render();
   },
-  "mes-dia": (el) => { ag.dia = dataDe(el.dataset.dia); ag.vista = "dia"; desaPref("agenda-vista", "dia"); render(); },
+  // Obre un dia des del mes o la setmana; «enrere» (botó o el del mòbil) hi torna
+  "mes-dia": (el) => { ag.dia = dataDe(el.dataset.dia); ag.origen = ag.vista; ag.vista = "dia"; history.pushState({ agDia: 1 }, ""); render(); scrollTo(0, 0); },
+  "ag-torna": () => { if (history.state?.agDia) history.back(); else tornaDeDia(); },
 
   // Nou esdeveniment
   "nou-qui": (el) => {
@@ -1672,6 +1674,8 @@ document.addEventListener("change", async (ev) => {
 // =============================================================
 // 15 · Inici de l'app
 // =============================================================
+function tornaDeDia() { if (!ag.origen) return; ag.vista = ag.origen; ag.origen = null; render(); }
+window.addEventListener("popstate", () => { if (ag.origen && location.hash.startsWith("#agenda")) tornaDeDia(); });
 window.addEventListener("hashchange", () => { sessionStorage.setItem("dins", "1"); render(); });
 window.addEventListener("online", render);
 aplicaAspecte();

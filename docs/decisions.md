@@ -48,12 +48,13 @@ Format: data · decisió · motiu · estat (vigent / pendent de confirmar / subs
 | 2026-11-20 | Les persones triades a l'app (també «tothom») tenen prioritat sobre les deduïdes pel títol | L'assignació manual mana | Vigent |
 | 2026-11-20 | Els punts de la tira de dies i del mes mostren els colors de totes les persones de la cita (sectors) | Comentari de l'Oriol | Vigent |
 | 2026-11-20 | La funció `calendar` informa de la seva versió (`versio: 2`); amb una funció antiga l'app no deixa editar i avisa | Evitar que una funció antiga interpreti una edició com un permís (afegiria «[Pendent]» al títol) | Vigent |
-| 2026-11-21 | De moment l'app llegeix el calendari provisional **«AppFamila»** (còpia de GLOB del 20/11). Les dates de l'institut de l'Oriol són a tots dos. Es passarà a GLOB quan l'Oriol tingui el PC | Provar sense tocar el calendari de la Laura | Provisional |
+| 2026-11-21 | De moment l'app llegeix el calendari provisional **«AppFamila»** (còpia de GLOB del 20/11). Les dates de l'institut de l'Oriol són a tots dos. Es passarà a GLOB quan l'Oriol tingui el PC | Provar sense tocar el calendari de la Laura | Substituïda (22/11) |
 | 2026-11-22 | Barres superiors compactes (48 px) i zona tàctil de 44 px a l'avatar de l'Inici | Més espai per al contingut al mòbil, sense baixar dels 44 px tàctils | Vigent |
 | 2026-11-22 | Mes de l'agenda amb pastilles amb el títol (estil Google Calendar) en lloc de punts | Triat per l'Oriol entre 6 propostes | Vigent |
 | 2026-11-22 | En obrir un dia des del mes o la setmana, botó «Torna al mes/a la setmana» i l'enrere del mòbil hi torna | Abans es perdia la vista d'origen | Vigent |
 | 2026-11-22 | Filtre de l'agenda (El meu, Tothom, persones) en un desplegable a la capçalera | Treu una fila de xips i guanya espai | Vigent |
 | 2026-11-22 | Setmana en vertical com a llista per dies; horari setmanal a pantalla completa (botó o mòbil girat) | Al mòbil dret es llegeix millor la llista; l'horari necessita amplada | Vigent |
+| 2026-11-22 | L'app llegeix i escriu directament **GLOB**. Abans del canvi s'hi van copiar els dos partits del Gael que només eren a AppFamila. AppFamila ja no es fa servir | Tenir a l'app el calendari real de la família | Vigent |
 
 ## Per què el compte de servei (xat 01)
 

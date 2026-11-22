@@ -29,8 +29,8 @@ Cada etapa és **un xat** (prompt a `docs/xats/`). No es comença la següent fi
 - [x] Mode prova amb dades d'exemple; mode connectat amb GLOB via `calendar`
 - [x] Noms reals de la família a `config.js` (Oriol, Laura, Bruna, Gael)
 - [x] `config.js` apunta al Supabase real (`rxuchoduwgxatnxqjysf`)
-- [ ] Provar el mode connectat amb GLOB als mòbils (cal la funció `calendar` actualitzada)
-- [ ] **Pendent (Oriol, des del PC):** passar l'app del calendari provisional «AppFamila» a GLOB: compartir GLOB amb el compte de servei («Fer canvis als esdeveniments»), canviar el secret `GOOGLE_CALENDAR_ID` per `jkhrtq2gc9o0aia9le5bft6678@group.calendar.google.com` i redesplegar `calendar`
+- [x] Mode connectat amb GLOB funcionant (22/11)
+- [x] App passada del calendari provisional «AppFamila» a GLOB i funció `calendar` actualitzada (22/11)
 - [x] De qui és cada esdeveniment de GLOB: pel nom al títol (revisat amb els esdeveniments reals fins al gener)
 - [x] Editar esdeveniments i camp «Per a qui» amb diverses persones; colors per persona (cal redesplegar `calendar`)
 - [ ] Confirmar el llindar de cost (ara 20 €)

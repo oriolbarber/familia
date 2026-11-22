@@ -1246,7 +1246,10 @@ function pantMenu() {
         ${fila("#menu/dades", I.disc, "Dades i còpia", MODE_PROVA ? "Mode prova" : "Connectada a Google Calendar")}
       </div>
       ${MODE_PROVA ? "" : h`<div class="menu"><button data-accio="oblida-codi">${I.sortir}<span class="cos"><b>Tanca la sessió en aquest mòbil</b></span></button></div>`}
+      <p class="versio" id="versio-app"></p>
     </div>`,
+    // La versió és el nom de la memòria cau del service worker
+    despres: () => caches?.keys().then((k) => { const v = k.find((x) => /^v\d/.test(x)); if (v && $("#versio-app")) $("#versio-app").textContent = `Versió de l'app: ${v}`; }).catch(() => {}),
   };
 }
 
@@ -1763,5 +1766,16 @@ document.addEventListener("keydown", (ev) => {
 window.addEventListener("hashchange", () => { sessionStorage.setItem("dins", "1"); render(); });
 window.addEventListener("online", render);
 aplicaAspecte();
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+// Actualització: es busca versió nova en obrir l'app o tornar-hi, i quan n'hi ha es recarrega sola
+if ("serviceWorker" in navigator) {
+  const teniaControl = !!navigator.serviceWorker.controller;
+  let recarregant = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!teniaControl || recarregant) return;
+    recarregant = true; location.reload();
+  });
+  navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then((reg) => {
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") reg.update().catch(() => {}); });
+  });
+}
 render();

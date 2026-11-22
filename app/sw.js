@@ -1,6 +1,6 @@
 // Service worker · Família (prova de concepte)
 // Puja VERSIO a cada canvi de fitxers perquè els mòbils s'actualitzin.
-const VERSIO = "v1-13";
+const VERSIO = "v1-14";
 const FITXERS = [
   "./", "index.html", "estil.css", "config.js", "js/dades.js", "js/app.js", "manifest.webmanifest",
   "fonts/atkinson-400.woff2", "fonts/atkinson-700.woff2",
@@ -24,7 +24,8 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== location.origin) return;
   e.respondWith(
-    fetch(e.request)
+    // «no-cache»: sempre pregunta al servidor si hi ha versió nova (no fa servir la còpia HTTP de 10 min)
+    fetch(e.request, { cache: "no-cache" })
       .then((r) => {
         const copia = r.clone();
         caches.open(VERSIO).then((c) => c.put(e.request, copia));

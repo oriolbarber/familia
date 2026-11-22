@@ -432,3 +432,4 @@ details[open] > summary::before { transform: rotate(90deg); }
 .bloc .h { opacity: .9; font-weight: 400; }
 .complet .bloc-tot { font-size: .72rem; }
 @media (orientation: portrait) { .complet .bloc .h { display: block; } }
+.versio { color: var(--suau); font-size: .8rem; text-align: center; }

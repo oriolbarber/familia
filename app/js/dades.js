@@ -34,11 +34,19 @@
 
   // ---------- Crides a les Edge Functions ----------
   async function crida(funcio, { metode = "GET", query = "", cos } = {}) {
-    const r = await fetch(`${C.FUNCIONS_URL}/${funcio}${query}`, {
-      method: metode,
-      headers: { "Content-Type": "application/json", "x-familia-codi": local.llegeix("codi", "") },
-      body: cos ? JSON.stringify(cos) : undefined,
-    });
+    let r;
+    try {
+      r = await fetch(`${C.FUNCIONS_URL}/${funcio}${query}`, {
+        method: metode,
+        headers: { "Content-Type": "application/json", "x-familia-codi": local.llegeix("codi", "") },
+        body: cos ? JSON.stringify(cos) : undefined,
+      });
+    } catch {
+      // El navegador no dona detalls: o no hi ha xarxa, o Supabase ha rebutjat la petició abans d'arribar a la funció
+      throw new Error(navigator.onLine
+        ? `No es pot connectar amb la funció «${funcio}» de Supabase. Comprova que està desplegada amb aquest nom i que té desactivada «Enforce JWT verification».`
+        : "Sense connexió.");
+    }
     const d = await r.json().catch(() => ({}));
     if (r.status === 401) {
       local.esborra("codi");

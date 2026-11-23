@@ -88,3 +88,8 @@ Cada etapa és **un xat** (prompt a `docs/xats/`). No es comença la següent fi
 - [ ] Taula `assistent_decisions` (guia pas 9) i redesplegar la funció `assistent`
 - [ ] Primera revisió del context amb el xat 08, al cap d'un mes d'ús
 - [ ] Més endavant: compartir des de la galeria a Android (Web Share Target)
+
+## 9 · Notes (post-its)
+
+- [x] Taula, funció `notes` i suro a «Més» amb colors, autor i avisos de notes noves
+- [ ] Executar `0004_notes.sql` i desplegar la funció `notes` (guia, pas 10)

@@ -55,6 +55,8 @@ Format: data · decisió · motiu · estat (vigent / pendent de confirmar / subs
 | 2026-11-22 | Filtre de l'agenda (El meu, Tothom, persones) en un desplegable a la capçalera | Treu una fila de xips i guanya espai | Vigent |
 | 2026-11-22 | Setmana en vertical com a llista per dies; horari setmanal a pantalla completa (botó o mòbil girat) | Al mòbil dret es llegeix millor la llista; l'horari necessita amplada | Vigent |
 | 2026-11-22 | L'app llegeix i escriu directament **GLOB**. Abans del canvi s'hi van copiar els dos partits del Gael que només eren a AppFamila. AppFamila ja no es fa servir | Tenir a l'app el calendari real de la família | Vigent |
+| 2026-11-23 | **Notes tipus post-it** a «Més» (suro amb 6 colors, autor i data). Es desen a Supabase (taula `notes`, funció `notes`), així que **es comparteixen** entre mòbils des del primer dia. Edita i esborra qui l'ha escrita o un adult; esborrar amb confirmació lliscant | Petició de l'Oriol; sense compartir, les notes no serveixen | Vigent |
+| 2026-11-23 | Notes noves d'altres persones: punt vermell a «Més» i avís a «Et toca a tu» | Saber que hi ha alguna cosa nova sense haver d'entrar-hi | Vigent |
 
 ## Per què el compte de servei (xat 01)
 

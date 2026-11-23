@@ -10,3 +10,6 @@ verify_jwt = false
 
 [functions.assistent]
 verify_jwt = false
+
+[functions.notes]
+verify_jwt = false

@@ -212,6 +212,43 @@
   function fiReal(e) { return e.totElDia ? e.fi + "T00:00" : e.fi; }
 
   // =============================================================
+  // Notes (post-its compartits; funció «notes»). En mode prova, en aquest navegador.
+  // =============================================================
+  const Notes = {
+    // Retorna { notes, error, desada }
+    async llista() {
+      if (MODE_PROVA) {
+        if (!local.llegeix("prova:notes")) {
+          const [a, b] = C.MEMBRES.map((m) => m.id);
+          local.escriu("prova:notes", [
+            { id: nouId(), text: "Qui pugui, que compri piles AA per al comandament de la tele.", color: "groc", autor: a, creada: new Date(Date.now() - 2 * 36e5).toISOString() },
+            { id: nouId(), text: "Divendres sopem a casa dels avis. Hi som tots?", color: "rosa", autor: b, creada: new Date(Date.now() - 26 * 36e5).toISOString() },
+          ]);
+        }
+        return { notes: local.llegeix("prova:notes", []).sort((x, y) => (x.creada < y.creada ? 1 : -1)) };
+      }
+      try {
+        const d = await crida("notes");
+        local.escriu("notes:copia", d.notes);
+        return { notes: d.notes };
+      } catch (e) {
+        if (e.codi === 401) throw e;
+        return { notes: local.llegeix("notes:copia", []), error: e.message, desada: !!local.llegeix("notes:copia") };
+      }
+    },
+    async desa(accio, persona, dades) {
+      if (MODE_PROVA) {
+        const l = local.llegeix("prova:notes", []);
+        if (accio === "crea") l.push({ id: nouId(), autor: persona, creada: new Date().toISOString(), ...dades });
+        if (accio === "edita") Object.assign(l.find((n) => n.id === dades.id) ?? {}, dades, { actualitzada: new Date().toISOString() });
+        local.escriu("prova:notes", accio === "esborra" ? l.filter((n) => n.id !== dades.id) : l);
+        return;
+      }
+      return crida("notes", { metode: "POST", cos: { accio, persona, ...dades } });
+    },
+  };
+
+  // =============================================================
   // Assistent (funció «assistent» → Claude Haiku 5.5)
   // =============================================================
   const Assistent = {
@@ -283,5 +320,5 @@
     local.esborra("prova:llavor");
   }
 
-  window.Dades = { MODE_PROVA, local, crida, Agenda, Col, Assistent, persones, isoDia, iniReal, fiReal, DIA };
+  window.Dades = { MODE_PROVA, local, crida, Agenda, Col, Notes, Assistent, persones, isoDia, iniReal, fiReal, DIA };
 })();

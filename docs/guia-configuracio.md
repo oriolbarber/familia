@@ -146,3 +146,12 @@ Cada vegada que acceptes, edites o descartes una proposta, es desa a Supabase. N
 4. Si vols, esborra les decisions antigues (consulta al final de `0003_assistent_decisions.sql`).
 
 El fitxer conté informació personal: no el pugis al repositori.
+
+---
+
+## 10 · Notes (post-its compartits)
+
+1. **Taula.** SQL Editor → executa `supabase/migrations/0004_notes.sql`.
+2. **Funció.** Edge Functions → Deploy a new function → Via Editor → nom `notes` → enganxa `supabase/functions/notes/index.ts` → **Deploy**. A **Details**, desactiva **Enforce JWT verification**.
+
+No cal cap secret nou: fa servir `FAMILIA_CODI`. Si la funció no hi és, a «Més» surt «No s'han pogut llegir les notes».

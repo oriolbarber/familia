@@ -189,7 +189,7 @@ function comptadors() {
   const permisos = esAdult() ? [...vistos.values()].filter((e) => e.permis?.estat === "pendent" && new Date(fiReal(e)) > new Date()).length : 0;
   const tasques = propostesMeves().perMi.length;
   const prestecs = prestecsInfo().filter((p) => p.tocaAMi).length;
-  return { inici: 0, agenda: permisos, tasques, compra: 0, mes: prestecs };
+  return { inici: 0, agenda: permisos, tasques, compra: 0, mes: prestecs + notesNoves() };
 }
 const punt = (n, etiqueta = "avisos") => (n ? h`<span class="punt-avis" aria-label="${plural(n, "avís", etiqueta)}">${n > 9 ? "9+" : n}</span>` : "");
 
@@ -222,8 +222,14 @@ function torna(pare) {
 // =============================================================
 // 6 · Inici («què toca ara»)
 // =============================================================
+let notesCarregades = 0;
 async function pantInici() {
   const ara = new Date();
+  // Notes en segon pla (com a molt cada 5 minuts) per al punt vermell de «Més»
+  if (Date.now() - notesCarregades > 3e5) {
+    notesCarregades = Date.now();
+    Dades.Notes.llista().then((r) => { ultimesNotes = r.notes; if (notesNoves() && location.hash.replace("#", "") in { "": 1, inici: 1 }) render(); }).catch(() => {});
+  }
   const { llista } = await Agenda.interval(avui(), sumaDies(avui(), 60));
   recorda(llista);
   const dAvui = delDia(llista, avui());
@@ -245,6 +251,7 @@ async function pantInici() {
   for (const t of ts.filter((t) => t.endarrerida && tascaAplica(t, "meu")).slice(0, 3)) {
     toca.push(h`<a class="element" href="#tasca/${t.id}">${raw(I.alerta.s.replace('stroke="currentColor"', 'stroke="#9A5B00"'))}<span class="cos"><b>${t.nom}</b><span>Endarrerida · ${t.text}</span></span>${I.seg}</a>`);
   }
+  if (notesNoves()) toca.push(h`<a class="element" href="#mes">${svg('<path d="M5 3h14v12l-6 6H5z"/><path d="M13 21v-6h6"/>')}<span class="cos"><b>${plural(notesNoves(), "nota nova", "notes noves")}</b><span>Al suro de «Més»</span></span>${I.seg}</a>`);
   for (const p of prestecsInfo()) {
     if (p.tocaAMi) toca.push(h`<a class="element avis" href="#mes">${I.canvi}<span class="cos"><b>Préstec per confirmar</b><span>${p.text}</span></span>${I.seg}</a>`);
     else if (p.estat === "actiu" && p.a === jo) toca.push(h`<a class="element" href="#mes">${I.canvi}<span class="cos"><b>Préstec pendent</b><span>Has de tornar ${euros(p.import)} a ${nom(p.de)}</span></span>${I.seg}</a>`);
@@ -967,8 +974,70 @@ let deQui = null;
 const PRIORITATS = { molt: "Molt", bastant: "Bastant", poc: "Una mica" };
 const domini = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
 
-function pantMes() {
+// ---------- Notes (post-its) ----------
+const COLORS_NOTA = { groc: "Groc", rosa: "Rosa", verd: "Verd", blau: "Blau", taronja: "Taronja", lila: "Lila" };
+let ultimesNotes = [];      // per al detall i el comptador de noves
+let colorNota = "groc";
+const potEditarNota = (n) => n.autor === jo || esAdult();
+const notesNoves = () => ultimesNotes.filter((n) => n.autor !== jo && n.creada > (pref("notes-vist:" + jo, "") || "")).length;
+
+function postit(n, i) {
+  const gir = [-1.6, 1.2, -0.6, 1.8, -1.2, 0.7][i % 6];
+  return h`<button class="postit postit-${COLORS_NOTA[n.color] ? n.color : "groc"}" style="transform:rotate(${gir}deg)" data-accio="nota" data-id="${n.id}">
+    <span class="postit-text">${n.text}</span>
+    <span class="postit-peu">${inicial(n.autor, "petita")}<span>${nom(n.autor)} · ${faDies(n.creada)}</span></span>
+  </button>`;
+}
+
+function obreNota(id) {
+  const n = ultimesNotes.find((x) => x.id === id);
+  if (!n) return;
+  obreFull(h`<div class="postit postit-${n.color} postit-gran"><span class="postit-text">${n.text}</span>
+      <span class="postit-peu">${inicial(n.autor, "petita")}<span>${nom(n.autor)} · ${fData.format(new Date(n.creada))}</span></span></div>
+    ${potEditarNota(n) ? h`<a class="boto ample" href="#nota/${n.id}" data-accio="tanca-full">Edita</a>
+      <button class="boto perill ample" data-accio="nota-esborra" data-id="${n.id}">Esborra</button>` : ""}
+    <button class="boto ample" data-accio="tanca-full">Tanca</button>`);
+}
+
+function pantNota(id) {
+  const n = id ? ultimesNotes.find((x) => x.id === id) : null;
+  if (id && !n) return { sub: true, pare: "mes", titol: "Nota", cos: h`<p class="buit" style="padding-top:20px">Aquesta nota ja no existeix.</p>` };
+  colorNota = n?.color ?? colorNota;
+  return {
+    sub: true, pare: "mes", titol: n ? "Edita la nota" : "Nova nota",
+    cos: h`<form id="form-nota" class="formulari">
+      <div id="nota-vista" class="postit postit-${colorNota} postit-gran" style="cursor:default">
+        <label for="nota-text" class="oculta">Text de la nota</label>
+        <textarea id="nota-text" class="postit-camp" maxlength="500" required placeholder="Escriu la nota…">${n?.text ?? ""}</textarea>
+        <span class="postit-peu">${inicial(n?.autor ?? jo, "petita")}<span>${nom(n?.autor ?? jo)}</span></span>
+      </div>
+      <fieldset><legend>Color</legend>
+        <div class="fila" style="flex-wrap:wrap;gap:10px">${Object.entries(COLORS_NOTA).map(([k, t]) => h`<button type="button" class="tria-color postit-${k}" data-accio="nota-color" data-c="${k}" aria-pressed="${k === colorNota}" aria-label="${t}">${k === colorNota ? I.ok : ""}</button>`)}</div>
+      </fieldset>
+      <button class="boto primari ample" type="submit">${n ? "Desa" : "Penja la nota"}</button>
+    </form>`,
+    despres: () => {
+      $("#form-nota").onsubmit = async (ev) => {
+        ev.preventDefault();
+        const text = $("#nota-text").value.trim();
+        if (!text) return;
+        try {
+          await Dades.Notes.desa(n ? "edita" : "crea", jo, { id: n?.id, text, color: colorNota });
+          avisa(n ? "Desat." : "Nota penjada.");
+          location.hash = "mes";
+        } catch (e) { avisa(e.message); }
+      };
+      if (!n) $("#nota-text").focus();
+    },
+  };
+}
+
+async function pantMes() {
   deQui = deQui ?? jo;
+  const rn = await Dades.Notes.llista();
+  ultimesNotes = rn.notes;
+  const noves = notesNoves();
+  desaPref("notes-vist:" + jo, new Date().toISOString());
   const desitjos = Col.llista("desitjos").filter((d) => d.persona === deQui)
     .sort((a, b) => Object.keys(PRIORITATS).indexOf(a.prioritat) - Object.keys(PRIORITATS).indexOf(b.prioritat));
   const prestecs = prestecsInfo().filter((p) => p.visible);
@@ -977,6 +1046,13 @@ function pantMes() {
   return {
     tab: "mes", titol: "Més",
     cos: h`<div class="seccio" style="margin-top:4px">
+        <h2><span class="amb-punt" style="padding-right:14px">Notes${punt(noves, "notes noves")}</span> <a class="boto petit" href="#nota-nova">Nova</a></h2>
+        ${rn.error ? h`<p class="avis-caixa">${rn.desada ? "Sense connexió: es mostra l'última còpia." : `No s'han pogut llegir les notes: ${rn.error}`}</p>` : ""}
+        ${ultimesNotes.length ? h`<div class="suro">${ultimesNotes.slice(0, 12).map(postit)}</div>
+          ${ultimesNotes.length > 12 ? h`<p class="buit" style="font-size:.85rem">Es mostren les 12 més recents.</p>` : ""}`
+          : h`<p class="buit">Encara no hi ha cap nota.</p>`}
+      </div>
+      <div class="seccio">
         <h2>Desitjos ${deQui === jo ? h`<a class="boto petit" href="#desig-nou">Afegeix</a>` : ""}</h2>
         <div class="xips" role="group" aria-label="De qui">${C.MEMBRES.map((m) => h`<button class="xip amb-inicial" data-accio="desitjos-de" data-id="${m.id}" aria-pressed="${m.id === deQui}">${inicial(m.id, "petita")}${m.id === jo ? "Els meus" : m.nom}</button>`)}</div>
         ${desitjos.length ? desitjos.map((d) => h`<button class="element" data-accio="desig" data-id="${d.id}">
@@ -1379,7 +1455,7 @@ function pantTriaPersona() {
 const PANTALLES = {
   inici: pantInici, agenda: pantAgenda, nou: (d) => pantNou(d), edita: pantEdita, permis: pantPermis, assistent: pantAssistent,
   tasques: pantTasques, tasca: pantTasca, "tasca-nova": pantTascaNova,
-  compra: pantCompra, mes: pantMes, "desig-nou": pantDesigNou, "prestec-nou": pantPrestecNou,
+  compra: pantCompra, mes: pantMes, nota: (id) => pantNota(id), "nota-nova": () => pantNota(null), "desig-nou": pantDesigNou, "prestec-nou": pantPrestecNou,
   menu: (sub) => ({ persona: pantPersona, aspecte: pantAspecte, avisos: pantAvisos, dades: pantDades }[sub] ?? pantMenu)(),
 };
 
@@ -1619,6 +1695,18 @@ const ACCIONS = {
   },
 
   // Més
+  nota: (el) => obreNota(el.dataset.id),
+  "nota-color": (el) => {
+    colorNota = el.dataset.c;
+    for (const b of document.querySelectorAll("[data-accio=nota-color]")) { const sel = b === el; b.setAttribute("aria-pressed", String(sel)); b.innerHTML = sel ? I.ok.s : ""; }
+    $("#nota-vista").className = `postit postit-${colorNota} postit-gran`;
+  },
+  async "nota-esborra"(el) {
+    $("#full").close();
+    if (!(await confirma("Esborrar aquesta nota per a tothom?"))) return;
+    try { await Dades.Notes.desa("esborra", jo, { id: el.dataset.id }); avisa("Nota esborrada."); render(); }
+    catch (e) { avisa(e.message); }
+  },
   "desitjos-de": (el) => { deQui = el.dataset.id; render(); },
   desig: (el) => obreDesig(el.dataset.id),
   "desig-prioritat": (el) => { prioritatNova = el.dataset.p; premut(el); },
@@ -1650,7 +1738,7 @@ const ACCIONS = {
   },
 
   // Menú
-  "tria-persona": (el) => { jo = el.dataset.id; desaPref("persona", jo); deQui = null; avisa(`Hola, ${nom(jo)}.`); vesA("inici"); },
+  "tria-persona": (el) => { notesCarregades = 0; jo = el.dataset.id; desaPref("persona", jo); deQui = null; avisa(`Hola, ${nom(jo)}.`); vesA("inici"); },
   aspecte: (el) => { desaPref(el.dataset.k, el.dataset.v); aplicaAspecte(); render(); },
   daltonics: (el) => { desaPref("daltonics", el.checked); aplicaAspecte(); },
   async "oblida-codi"() {
